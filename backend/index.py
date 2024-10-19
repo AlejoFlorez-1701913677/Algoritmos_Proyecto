@@ -57,8 +57,8 @@ data = st.file_uploader("Elige un Archivo")
 
 st.divider()
 
-st.subheader("Descomponer tabla de probabilidad")
-st.page_link("pages/index_Conversion.py",label="Descomponer Tabla de Probabilidad")
+#st.subheader("Descomponer tabla de probabilidad")
+#st.page_link("pages/index_Conversion.py",label="Descomponer Tabla de Probabilidad")
 
 if data is not None:
 
