@@ -19,7 +19,8 @@ def indexCandidateSystem_v4(probabilities, candidateSystem, full_system):
     
     for i in range(size):
         # Generar la representación binaria de la fila actual
-        row_binary = format(i, f'0{num_variables}b')
+        # Al crear el formato en binario, se reescribe al reves, esto para que la validación de valor en la posición sea correcta
+        row_binary = format(i, f'0{num_variables}b')[::-1]
         
         # Revisar si las posiciones de las variables faltantes tienen un "1"
         should_remove = False
@@ -28,14 +29,16 @@ def indexCandidateSystem_v4(probabilities, candidateSystem, full_system):
             # El bit más significativo (izquierda) es el primer bit en row_binary
             # Encontramos el índice correcto de la variable faltante en la representación binaria
             missing_var_index = full_system.index(missing_var)  # El índice en full_system de la variable faltante
-            
+            #print(row_binary + " -> "+missing_var+" :: "+str(missing_var_index)+" ::: "+row_binary[missing_var_index])
             if row_binary[missing_var_index] == "1":  # Si ese bit es 1, eliminamos la fila
                 should_remove = True
                 break
         
+        #print(f'{row_binary}: {probabilities[i]}')
+        
         # Si no hay un "1" en la posición de las variables faltantes, conservar la fila
         if not should_remove:
-            #print(row_binary)
+            #print("--> "+row_binary)
             #print(probabilities[i])
             valid_rows.append(probabilities[i])
     
@@ -45,6 +48,7 @@ def indexCandidateSystem_v4(probabilities, candidateSystem, full_system):
         #print(f'{row_binary}: {row}')
         probabilities_result.append(row)
 
+    #print("-----------------------------------------------")
     return probabilities_result
 
 # Obtiene la tabla eliminado las filas  que no se encuentre en el parametro de candidateSystem (Cuando el valor binario de la variable es 1)
@@ -83,7 +87,7 @@ def marginalizationTable_v4(probabilities, candidateSystem, full_system):
             
             # Multiplicar las columnas i y twin_index
             for row in range(len(probabilities)):
-                result_table[row][i] = probabilities[row][i] * probabilities[row][twin_index]
+                result_table[row][i] = ((probabilities[row][i] * probabilities[row][twin_index])/2)
     
     # Crear una nueva tabla sin las columnas cuyo índice de la variable faltante sea 1
     final_table = []
@@ -99,4 +103,4 @@ def marginalizationTable_v4(probabilities, candidateSystem, full_system):
 
     # Retornar la tabla final (n x n)
     return final_table
-
+    # return []
