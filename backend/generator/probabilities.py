@@ -57,12 +57,14 @@ def generatorProbabilities(data):
             status = getStatus_v8()
         
 
-        return valueStatus, result_matrix, status
+        return valueStatus, result_matrix, status, getVariables(data)
         
     def searchStatus(data, result_matrix):
 
         statusPosition = int(str(data["stateSought"])[::-1],2);
         return result_matrix[statusPosition]
 
+    def getVariables(data):
+        return list(data["primogenitalTables"].keys());
 
     return createTableGeneral(data)

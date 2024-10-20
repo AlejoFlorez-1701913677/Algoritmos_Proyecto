@@ -17,9 +17,8 @@ from backend.strategies.cut_algoritmo import cut_process
 from backend.strategies.greedy import greedy_bipartite, plot_bipartite_process
 
 from backend.generator.probabilities import generatorProbabilities
-from backend.generator.calculateProbabilities_v3 import getStatus_v3
 
-from backend.candidateSystemGenerator.candidateGenerator import indexCandidateSystem
+from backend.candidateSystemGenerator.candidateGenerator_v4 import indexCandidateSystem_v4, marginalizationTable_v4
 
 def format_partition_output(partition_result):
     # Extraer las particiones de 'ns' y 'cs' junto con la distancia de EMD
@@ -47,7 +46,6 @@ def format_partition_output(partition_result):
 
     return formatted_output
 
-
 st.title('Próyecto Final')
 st.subheader('Análisis Y Diseño De Algoritmo')
 
@@ -68,7 +66,7 @@ if data is not None:
     # To convert to a string based IO:
     dataJson = json.loads(StringIO(data.getvalue().decode("utf-8")).read())
 
-    searchStatus, result_matrix, states = generatorProbabilities(dataJson)
+    searchStatus, result_matrix, states, varData = generatorProbabilities(dataJson)
 
     st.header('Tabla de Probabilidad')
     st.table(result_matrix)
@@ -90,16 +88,14 @@ if data is not None:
 
     if execCandidateSystem:
 
-        result_matrix = indexCandidateSystem(result_matrix,candidateSystem, st)
+        candidateSystem_Imperfect = indexCandidateSystem_v4(result_matrix,candidateSystem, varData)
+        candidateSystem_Perfect = marginalizationTable_v4(candidateSystem_Imperfect,candidateSystem, varData)
+        
+        st.subheader("Tabla de Sistema Candidato - Imperfecta")
+        st.table(candidateSystem_Imperfect)
 
-        st.subheader("Tabla de Sistema Candidato")
-        st.table(result_matrix)
-
-        states =getStatus_v3()
-
-        st.subheader("Tabla de Estados - Sistema candidato")
-        st.table(states)
-
+        st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
+        st.table(candidateSystem_Perfect)
     
 
     with st.expander("Descomposición"):

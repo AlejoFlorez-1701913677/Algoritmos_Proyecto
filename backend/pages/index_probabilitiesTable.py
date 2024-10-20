@@ -16,7 +16,7 @@ from backend.strategies.minimaParticion import decomposition
 from backend.strategies.cut_algoritmo import cut_process
 from backend.strategies.greedy import greedy_bipartite, plot_bipartite_process
 
-from backend.candidateSystemGenerator.candidateGenerator import indexCandidateSystem
+from backend.candidateSystemGenerator.candidateGenerator_v4 import indexCandidateSystem_v4
 
 def format_partition_output(partition_result):
     # Extraer las particiones de 'ns' y 'cs' junto con la distancia de EMD
