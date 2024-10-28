@@ -54,58 +54,37 @@ def indexCandidateSystem(probabilities, candidateSystem, full_system):
 # Sumo las columnas que las variables del sistema candidato sean iguales, pero la variable eliminada sea distinta
 # ((v1+v2)/2)
 # retorna una tabla de 3x3 (al ser 4 variables)
-def marginalizationTable(probabilities, candidateSystem, full_system):
+def marginalizationTable(probabilities, candidate_system, full_system):
      
-    num_variables_full = len(full_system)
-    num_variables_candidate = len(candidateSystem)
+    # Dimensiones de la tabla original
+    n = len(probabilities)
+    m = len(probabilities[0]) if probabilities else 0
     
     # Identificar la variable faltante
-    missing_variable = [var for var in full_system if var not in candidateSystem]
+    missing_var = set(full_system) - set(candidate_system)
+    if len(missing_var) != 1:
+        raise ValueError("Debe faltar solo una variable en el sistema candidato.")
+    missing_var = list(missing_var)[0]
     
-    if not missing_variable:
-        print("No missing variables. Returning original table.")
-        return probabilities  # No hay variables faltantes, no es necesario multiplicar
+    # Índice de la variable faltante en full_system
+    missing_var_index = full_system.index(missing_var)
     
-    missing_variable = missing_variable[0]  # Asumimos que solo falta una variable
-
-    # Crear una tabla vacía con las mismas dimensiones que la original
-    result_table = [[0] * len(probabilities[0]) for _ in range(len(probabilities))]
+    # Determinar el número de columnas en la tabla marginalizada: n x n
+    new_n = 2 ** (len(candidate_system) - 1)
+    result_table = [[0] * new_n for _ in range(n)]
     
-    # Número de columnas en la tabla
-    num_columns = len(probabilities[0]) if probabilities else 0
-
-    # Recorrer las columnas de la tabla y procesar las que solo difieren en la variable faltante
-    for i in range(num_columns):
-        # Generar la representación binaria de la columna actual
-        col_binary = format(i, f'0{num_variables_full}b')[::-1]
-        # print(col_binary+"\n")
+    # Marginalización de la variable faltante
+    for col in range(new_n):
+        # Calcular la columna emparejada cambiando solo el bit de la variable faltante
+        paired_col = col ^ (1 << (len(full_system) - missing_var_index - 1))
         
-        # Si la posición de la variable faltante es 0, buscamos la columna que difiere solo en esa variable
-        if col_binary[full_system.index(missing_variable)] == "0":
-            print(col_binary+"\n")
-            # Generar el índice de la columna "gemela" que difiere solo en la variable faltante
-            twin_index = i + (1 << (num_variables_full - full_system.index(missing_variable) - 1))  # Cambia el bit de la variable faltante
-            print(str(twin_index)+"\n")
-            
-            # Multiplicar las columnas i y twin_index
-            for row in range(len(probabilities)):
-                result_table[row][i] = ((probabilities[row][i] * probabilities[row][twin_index])/2)
+        # Verificar que paired_col esté dentro de rango
+        if paired_col < m:
+            # Multiplicación y almacenamiento en la nueva tabla
+            for row in range(n):
+                result_table[row][col] = (probabilities[row][col] + probabilities[row][paired_col]) / 2
     
-    # Crear una nueva tabla sin las columnas cuyo índice de la variable faltante sea 1
-    final_table = []
-    
-    for row in result_table:
-        # Filtrar las columnas donde el bit correspondiente a la variable faltante sea 0
-        filtered_row = [row[i] for i in range(num_columns) if format(i, f'0{num_variables_full}b')[full_system.index(missing_variable)] == "0"]
-        final_table.append(filtered_row)
-    
-    # Imprimir la nueva tabla después de la multiplicación y eliminación
-    #for row in final_table:
-        #print(row)
-
-    # Retornar la tabla final (n x n)
-    return final_table
-    # return []
+    return result_table
 
 def marginalize_variable(probabilities, candidate_system, full_system):
     # Dimensiones de la tabla original
