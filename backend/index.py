@@ -18,7 +18,7 @@ from backend.strategies.greedy import greedy_bipartite, plot_bipartite_process
 
 from backend.generator.probabilities import generatorProbabilities
 
-from backend.candidateSystemGenerator.candidateGenerator_v4 import indexCandidateSystem_v4, marginalizationTable_v4
+from backend.candidateSystemGenerator.candidateGenerator_v4 import indexCandidateSystem, marginalize_variable
 
 def format_partition_output(partition_result):
     # Extraer las particiones de 'ns' y 'cs' junto con la distancia de EMD
@@ -88,8 +88,8 @@ if data is not None:
 
     if execCandidateSystem:
 
-        candidateSystem_Imperfect = indexCandidateSystem_v4(result_matrix,candidateSystem, varData)
-        candidateSystem_Perfect = marginalizationTable_v4(candidateSystem_Imperfect,candidateSystem, varData)
+        candidateSystem_Imperfect = indexCandidateSystem(result_matrix,candidateSystem, varData)
+        candidateSystem_Perfect = marginalize_variable(candidateSystem_Imperfect,candidateSystem, varData)
         
         st.subheader("Tabla de Sistema Candidato - Imperfecta")
         st.table(candidateSystem_Imperfect)
