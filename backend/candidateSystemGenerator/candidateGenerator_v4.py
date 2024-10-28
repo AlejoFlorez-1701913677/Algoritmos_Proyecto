@@ -127,21 +127,15 @@ def marginalize_variable(probabilities, candidate_system, full_system):
     result_table = [[0] * n for _ in range(n)]
     
     # Marginalizar la variable faltante
-    for col in range(m):
-        print("\n--- °-° ---\n")
+    for col in range(n):  # Ahora solo iteramos hasta n
         # Calcular la columna emparejada cambiando solo el bit de la variable faltante
         paired_col = col ^ (1 << (len(full_system) - missing_var_index - 1))
-        print(paired_col)
         
-        # Evitar duplicados, solo multiplicar si paired_col es mayor que col
-        if paired_col > col and paired_col < m:  # Verificamos que paired_col esté dentro de rango
+        # Evitar duplicados, solo multiplicar si paired_col es mayor que col y dentro del rango
+        if paired_col > col and paired_col < m:
             # Multiplicación de columnas y almacenamiento en la nueva tabla
             for row in range(n):
-
-                print(result_table[row])
-                print(str(row)+" :: "+str(col))
-                print("--- °-° ---\n")
-
-                result_table[row][col] = ((probabilities[row][col] + probabilities[row][paired_col])/2)
+                # Promediamos los valores de las dos columnas marginalizadas
+                result_table[row][col] = (probabilities[row][col] + probabilities[row][paired_col]) / 2
     
     return result_table
