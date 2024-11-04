@@ -1,4 +1,12 @@
 import numpy as np
+from scipy.stats import wasserstein_distance
+from backend.marginalizacion import obtener_tabla_probabilidades
+
+from backend.auxiliares import (
+    ordenar_matriz_product,
+    repr_current_to_array,
+    repr_next_to_array,
+)
 
 # Obtiene la tabla eliminado las filas  que no se encuentre en el parametro de candidateSystem (Cuando el valor binario de la variable es 1)
 def indexCandidateSystem(probabilities, candidateSystem, full_system):
@@ -50,43 +58,7 @@ def indexCandidateSystem(probabilities, candidateSystem, full_system):
     #print("-----------------------------------------------")
     return probabilities_result
 
-# Obtiene la tabla eliminado las filas  que no se encuentre en el parametro de candidateSystem (Cuando el valor binario de la variable es 1)
-# Sumo las columnas que las variables del sistema candidato sean iguales, pero la variable eliminada sea distinta
-# ((v1+v2)/2)
-# retorna una tabla de 3x3 (al ser 4 variables)
-def marginalizationTable(probabilities, candidate_system, full_system):
-     
-    # Dimensiones de la tabla original
-    n = len(probabilities)
-    m = len(probabilities[0]) if probabilities else 0
-    
-    # Identificar la variable faltante
-    missing_var = set(full_system) - set(candidate_system)
-    if len(missing_var) != 1:
-        raise ValueError("Debe faltar solo una variable en el sistema candidato.")
-    missing_var = list(missing_var)[0]
-    
-    # Índice de la variable faltante en full_system
-    missing_var_index = full_system.index(missing_var)
-    
-    # Determinar el número de columnas en la tabla marginalizada: n x n
-    new_n = 2 ** (len(candidate_system) - 1)
-    result_table = [[0] * new_n for _ in range(n)]
-    
-    # Marginalización de la variable faltante
-    for col in range(new_n):
-        # Calcular la columna emparejada cambiando solo el bit de la variable faltante
-        paired_col = col ^ (1 << (len(full_system) - missing_var_index - 1))
-        
-        # Verificar que paired_col esté dentro de rango
-        if paired_col < m:
-            # Multiplicación y almacenamiento en la nueva tabla
-            for row in range(n):
-                result_table[row][col] = (probabilities[row][col] + probabilities[row][paired_col]) / 2
-    
-    return result_table
-
-def marginalize_variable(probabilities, candidate_system, full_system):
+def marginalize_variableFuture(probabilities, candidate_system, full_system):
     # Dimensiones de la tabla original
     n = len(probabilities)
     m = len(probabilities[0]) if probabilities else 0
@@ -115,6 +87,39 @@ def marginalize_variable(probabilities, candidate_system, full_system):
             # Multiplicación de columnas y almacenamiento en la nueva tabla
             for row in range(n):
                 # Promediamos los valores de las dos columnas marginalizadas
-                result_table[row][col] = (probabilities[row][col] + probabilities[row][paired_col]) / 2
+                result_table[row][col] = (probabilities[row][col] + probabilities[row][paired_col])
+    
+    return result_table
+
+def marginalize_variablePresent(probabilities, candidate_system, full_system):
+    # Dimensiones de la tabla original
+    n = len(probabilities)
+    m = len(probabilities[0]) if probabilities else 0
+    
+    # Identificar la variable faltante
+    missing_var = set(full_system) - set(candidate_system)
+    if len(missing_var) != 1:
+        raise ValueError("Debe faltar solo una variable en el sistema candidato.")
+    
+    missing_var = list(missing_var)[0]
+    
+    # Índice de la variable faltante en full_system
+    missing_var_index = full_system.index(missing_var)
+    # print(missing_var_index)
+    
+    # Crear nueva tabla n x n para almacenar el resultado
+    result_table = [[0] * n for _ in range(n)]
+    
+    # Marginalizar la variable faltante
+    for col in range(n):  # Ahora solo iteramos hasta n
+        # Calcular la columna emparejada cambiando solo el bit de la variable faltante
+        paired_col = col ^ (1 << (len(full_system) - missing_var_index - 1))
+        
+        # Evitar duplicados, solo multiplicar si paired_col es mayor que col y dentro del rango
+        if paired_col > col and paired_col < m:
+            # Multiplicación de columnas y almacenamiento en la nueva tabla
+            for row in range(n):
+                # Promediamos los valores de las dos columnas marginalizadas
+                result_table[row][col] = ((probabilities[row][col] + probabilities[row][paired_col])/2)
     
     return result_table

@@ -18,7 +18,7 @@ from backend.strategies.greedy import greedy_bipartite, plot_bipartite_process
 
 from backend.generator.probabilities import generatorProbabilities
 
-from backend.candidateSystemGenerator.candidateGenerator_v4 import indexCandidateSystem, marginalize_variable
+from backend.candidateSystemGenerator.candidateGenerator import indexCandidateSystem, marginalize_variableFuture, marginalize_variablePresent
 
 def format_partition_output(partition_result):
     # Extraer las particiones de 'ns' y 'cs' junto con la distancia de EMD
@@ -79,54 +79,49 @@ if data is not None:
 
     st.divider()
 
-    st.subheader("¿Desea Crear un sistema Candidato?")
+    with st.expander("Sistema Candidato"):
 
-    st.write("Llené los siguientes datos, teniendo en cuenta que solo se puede marginalizar variables que se encuentren continuas")
-    candidateSystem = st.text_input("Sistema candidato", "ABC")
+        candidateSystem_Perfect = []
 
-    execCandidateSystem = st.button("Obtener sistema candidato")
+        st.divider()
 
-    if execCandidateSystem:
+        st.title("¿Desea Crear un sistema Candidato?")
 
-        candidateSystem_Imperfect = indexCandidateSystem(result_matrix,candidateSystem, varData)
-        candidateSystem_Perfect = marginalize_variable(candidateSystem_Imperfect,candidateSystem, varData)
-        
-        st.subheader("Tabla de Sistema Candidato - Imperfecta")
-        st.table(candidateSystem_Imperfect)
+        st.write("Llené los siguientes datos, teniendo en cuenta que solo se puede marginalizar variables que se encuentren continuas")
+        candidateSystem = st.text_input("Sistema candidato", "ABC")
 
-        st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
-        st.table(candidateSystem_Perfect)
-    
+        execCandidateSystem = st.button("Obtener sistema candidato")
 
-    with st.expander("Descomposición"):
+        if execCandidateSystem:
 
-        st.title("Procesar Datos con Descomposición")
-
-        st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
-
-        
-        st.write("Complete todos los campos")
+            candidateSystem_Imperfect = indexCandidateSystem(result_matrix,candidateSystem, varData)
+            candidateSystem_Perfect = marginalize_variableFuture(candidateSystem_Imperfect,candidateSystem, varData)
             
-        currentStatus = st.text_input("Estado Presente", "ABC")
-        nextStatus = st.text_input("Estado Futuro", "ABC")
-            
-        # Every form must have a submit button.
-        submitted = st.button("Procesar - Algoritmo Descomposición")
+            st.subheader("Tabla de Sistema Candidato - Imperfecta")
+            st.table(candidateSystem_Imperfect)
 
-        if submitted:
+            st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
+            st.table(candidateSystem_Perfect)
 
             st.divider()
-            st.subheader("Resultado Procesamiento de Datos")
 
-            start_time = time.time()
-            st.json(
-                format_partition_output(
-                    decomposition(
-                        nextStatus, currentStatus, dataJson["stateSought"], result_matrix, states, st
-                    )
-                )
-            )
+        st.subheader("Subsistema")
+        
+        st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
 
+        sysC_currentStatus = st.text_input("Estado Presente", "")
+        sysC_nextStatus = st.text_input("Estado Futuro", "")
+
+        execPairContruction = st.button("Obtener Pares")
+
+        if execPairContruction:
+
+            st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
+
+            mejor_particion, min_emd = decomposition(sysC_nextStatus, sysC_currentStatus, dataJson["stateSought"], result_matrix, states, st)
+
+            st.text(mejor_particion)
+            st.text(min_emd)
     
     with st.expander("Corte"):
         st.title("Procesar Datos con Algoritmo de Corte")
@@ -147,35 +142,3 @@ if data is not None:
 
             cut_process(nextStatus, currentStatusDesc, dataJson["stateSought"], result_matrix, states, st)
 
-
-    with st.expander("Estrategia Propia - Greedy"):
-
-        st.title("Procesar Datos con Greedy ")
-        st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
-
-        st.write("Complete todos los campos")
-            
-        currentStatusVoraz = st.text_input("Estado Presente OHGR", "ABC")
-        nextStatusVoraz = st.text_input("Estado Futuro OHGR", "ABC")
-        
-        # Every form must have a submit button.
-        submittedVoraz = st.button("Procesar - Algoritmo OHGR")
-
-        if submittedVoraz:
-
-            st.divider()
-            st.subheader("Resultado Procesamiento de Datos")
-
-            # Ejecución del algoritmo
-            U, V, steps = greedy_bipartite(result_matrix, st)
-            
-            st.subheader('Greedy Bipartite Graph Visualization')
-
-            st.write("Gráfo Principal")
-            st.table(U)
-
-            st.write("Gráfo Segundario")
-            st.table(V)
-            plot_bipartite_process(steps, st)
-
-            

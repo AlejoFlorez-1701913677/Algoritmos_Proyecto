@@ -14,10 +14,16 @@ from backend.marginalizacion import obtener_tabla_probabilidades
 
 
 def decomposition(ns, cs, cs_value, probabilities, states, st):
+
     memory = {}
+    impresos = set()
+
+    min_emd = float("inf")
+    mejor_particion = None
+    emd_distance = float("inf")
 
     st.write("Sistema Original")
-    st.write(""f"{ns}ᵗ⁺¹ | {cs}ᵗ")
+    st.latex(rf"""\bullet \left(\frac{{{ns}ᵗ⁺¹}}{{{cs}ᵗ}}\right)""")
 
     original_system = obtener_tabla_probabilidades(
         repr_current_to_array(cs, cs_value),
@@ -28,15 +34,6 @@ def decomposition(ns, cs, cs_value, probabilities, states, st):
 
     st.write("Validación Estado Original")
     st.text(original_system)
-
-    graphProbability(original_system,st)
-
-    memory = {}
-    impresos = set()
-
-    min_emd = float("inf")
-    mejor_particion = None
-    emd_distance = float("inf")
 
     def descomponer(ns, cs, memory, states):
         if memory.get(cs) is not None and memory.get(cs).get(ns) is not None:
@@ -87,14 +84,10 @@ def decomposition(ns, cs, cs_value, probabilities, states, st):
                         combinacion_actual = ((ns1, cs1), (ns2, cs2))
                         combinacion_inversa = ((ns2, cs2), (ns1, cs1))
 
-                        if (
-                            combinacion_actual not in impresos
-                            and combinacion_inversa not in impresos
-                        ) or (ns1 == ns and ns2 == "" and cs1 == "" and cs2 == ""):
+                        if (combinacion_actual not in impresos and combinacion_inversa not in impresos) or (ns1 == ns and ns2 == "" and cs1 == "" and cs2 == ""):
                             
-                            st.latex(rf"""
-                                     \bullet \left(\frac{{{ns2}}}{{{cs2}}}\right) * \left(\frac{{{ns1}}}{{{cs1}}}\right)
-                                     """)
+                            st.latex(rf"""\bullet \left(\frac{{{ns2}}}{{{cs2}}}\right) * \left(\frac{{{ns1}}}{{{cs1}}}\right)""")
+                            st.latex(rf"""\bullet \left(\frac{{{ns1}}}{{{cs1}}}\right) * \left(\frac{{{ns2}}}{{{cs2}}}\right)""")
                             
                             arr1 = np.array(descomponer(ns2, cs2, memory, states))
                             arr2 = np.array(descomponer(ns1, cs1, memory, states))
@@ -115,10 +108,8 @@ def decomposition(ns, cs, cs_value, probabilities, states, st):
                                 partitioned_system = np.array(partitioned_system)
 
                                 # Calcular la Distancia de Wasserstein (EMD)
-                                emd_distance = wasserstein_distance(
-                                    original_system,
-                                    partitioned_system,
-                                )
+                                # No puede tener arreglo vacio
+                                emd_distance = wasserstein_distance(original_system,partitioned_system)
                                 
                                 if emd_distance < min_emd:
                                     min_emd = emd_distance
@@ -132,7 +123,6 @@ def decomposition(ns, cs, cs_value, probabilities, states, st):
         st.subheader("Memoría")
 
         st.json(memory)
-
 
     return mejor_particion, round(min_emd, 5)
     
