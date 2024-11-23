@@ -1,5 +1,6 @@
 from networkx import tensor_product
 import numpy as np
+import random
 from scipy.stats import wasserstein_distance
 
 from backend.auxiliares import (
@@ -70,53 +71,27 @@ def decomposition(ns, cs, cs_value, probabilities, states, st):
 
         st.subheader("Estados Encontrados")
 
-        for lenNs in range(len(ns) + 1):
-            for i in range(len(ns) - lenNs + 1):
-                j = i + lenNs - 1
-                ns1, ns2 = ns[i : j + 1], ns[:i] + ns[j + 1 :]
+        Todos = []
+        
+        for x in range(len(ns)):
+            Todos.append(ns[x]+"N")
+        
+        for x in range(len(cs)):
+            Todos.append(cs[x])
+        #Todos = ["aA","aB","aC","bA","bB","bC","cA","cB","cC"]
+        while len(Todos) > 2:
+            Final = generar_combinaciones([Todos[0]],Todos[1:],True,st)
+            st.latex(f'{Final} - Unido')
+            Arreglo = Cortar(Final)
+            
+            for x in Todos[3:] :
+                Arreglo = generar_combinaciones(Arreglo[len(Arreglo)-1],Arreglo[:-1],True,st)
+                Arreglo = Cortar(Arreglo)
+                st.latex(f'{Arreglo} - Unido')
 
-                for lenCs in range(len(cs) + 1):
-                    for x in range(len(cs) - lenCs + 1):
-                        z = x + lenCs - 1
-                        cs1, cs2 = cs[x : z + 1], cs[:x] + cs[z + 1 :]
+            Todos = Arreglo
 
-                        # Verificar duplicados
-                        combinacion_actual = ((ns1, cs1), (ns2, cs2))
-                        combinacion_inversa = ((ns2, cs2), (ns1, cs1))
-
-                        if (combinacion_actual not in impresos and combinacion_inversa not in impresos) or (ns1 == ns and ns2 == "" and cs1 == "" and cs2 == ""):
-                            
-                            st.latex(rf"""\bullet \left(\frac{{{ns2}}}{{{cs2}}}\right) * \left(\frac{{{ns1}}}{{{cs1}}}\right)""")
-                            st.latex(rf"""\bullet \left(\frac{{{ns1}}}{{{cs1}}}\right) * \left(\frac{{{ns2}}}{{{cs2}}}\right)""")
-                            
-                            arr1 = np.array(descomponer(ns2, cs2, memory, states))
-                            arr2 = np.array(descomponer(ns1, cs1, memory, states))
-
-                            partitioned_system = []
-
-                            if len(arr1) > 0 and len(arr2) > 0:
-                                cross_product = np.kron(arr1, arr2)
-                                partitioned_system = ordenar_matriz_product(cross_product)
-
-                            elif len(arr1) > 0:
-                                partitioned_system = arr1
-                            elif len(arr2) > 0:
-                                partitioned_system = arr2
-
-                            if len(partitioned_system) > 0:
-                                # Convertir partitioned_system a array de NumPy si no lo es
-                                partitioned_system = np.array(partitioned_system)
-
-                                # Calcular la Distancia de Wasserstein (EMD)
-                                # No puede tener arreglo vacio
-                                emd_distance = wasserstein_distance(original_system,partitioned_system)
-                                
-                                if emd_distance < min_emd:
-                                    min_emd = emd_distance
-                                    mejor_particion = combinacion_actual
-
-                            impresos.add(combinacion_actual)
-                            impresos.add(combinacion_inversa)
+            #st.latex(Todos)
 
     with col2:
         
@@ -126,3 +101,42 @@ def decomposition(ns, cs, cs_value, probabilities, states, st):
 
     return mejor_particion, round(min_emd, 5)
     
+
+def generar_combinaciones(seleccionados, restantes,Primero, st):
+    st.latex(f"{seleccionados} - {restantes}")
+    Opciones = []
+    Combinacion =[False,1]
+    if isinstance(seleccionados,list) and len(seleccionados)>1 and Primero:
+        Combinacion[0]=True
+        Combinacion[1]=len(seleccionados)
+    if not restantes:
+        return seleccionados
+    for i in range(len(restantes)):
+        seleccionados.append(restantes[i])
+        Copsel=seleccionados[:]
+        Copia = restantes[:]
+        Copia.remove(restantes[i])
+        Valor = random.randint(1, 100)
+        st.latex(f"{Copsel} - {Copia} - {Valor}")
+        Opciones.append([Copsel,Copia,Valor])
+        seleccionados.remove(restantes[i])
+    st.latex(f'{min(Opciones, key=lambda x: x[2])}')
+    seleccion = min(Opciones, key=lambda x: x[2])
+    Final= generar_combinaciones(seleccion[0], seleccion[1],False, st)
+    if(Combinacion[0]):
+        Final=[Final[:Combinacion[1]]]+Final[Combinacion[1]:]
+        st.latex(f"{Final}")
+    return Final
+
+def  Cortar(Lista):
+    Corte = Lista[-2:]
+    Corte_unido = []
+    for elem in Corte:
+        if isinstance(elem, list):
+            Corte_unido.extend(elem)
+        else:
+            Corte_unido.append(elem)
+
+    Arreglo = Lista[:-2]
+    Arreglo.append(Corte_unido)
+    return Arreglo
