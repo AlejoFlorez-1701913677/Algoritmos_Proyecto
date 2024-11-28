@@ -13,8 +13,6 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from backend.strategies.minimaParticion import decomposition
-from backend.strategies.cut_algoritmo import cut_process
-from backend.strategies.greedy import greedy_bipartite, plot_bipartite_process
 
 from backend.generator.probabilities import generatorProbabilities
 
@@ -79,7 +77,7 @@ if data is not None:
 
     st.divider()
 
-    with st.expander("Sistema Candidato"):
+    with st.expander("Primera Estrategia"):
 
         candidateSystem_Perfect = []
 
@@ -122,23 +120,3 @@ if data is not None:
 
             st.text(mejor_particion)
             st.text(min_emd)
-    
-    with st.expander("Corte"):
-        st.title("Procesar Datos con Algoritmo de Corte")
-        st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
-
-        st.write("Complete todos los campos")
-            
-        currentStatusDesc = st.text_input("Estado Presente Cut", "ABC")
-        nextStatusDesc = st.text_input("Estado Futuro Cut", "ABC")
-            
-        # Every form must have a submit button.
-        submittedDesc = st.button("Procesar - Algoritmo Corte")
-
-        if submittedDesc:
-
-            st.divider()
-            st.subheader("Resultado Procesamiento de Datos")
-
-            cut_process(nextStatus, currentStatusDesc, dataJson["stateSought"], result_matrix, states, st)
-

@@ -12,11 +12,15 @@ from chartPlotter.ProbabilityTransitionController import graphProbability
 
 from backend.marginalizacion import obtener_tabla_probabilidades
 
+from backend.strategies.FirstStrategy import FirstStrategy
+
 
 def decomposition(ns, cs, cs_value, probabilities, states, st):
 
     memory = {}
     impresos = set()
+
+    firstStrategy = FirstStrategy(probabilities, cs_value)
 
     min_emd = float("inf")
     mejor_particion = None
@@ -71,6 +75,7 @@ def decomposition(ns, cs, cs_value, probabilities, states, st):
         st.subheader("Estados Encontrados")
 
         for lenNs in range(len(ns) + 1):
+
             for i in range(len(ns) - lenNs + 1):
                 j = i + lenNs - 1
                 ns1, ns2 = ns[i : j + 1], ns[:i] + ns[j + 1 :]
@@ -94,14 +99,15 @@ def decomposition(ns, cs, cs_value, probabilities, states, st):
 
                             partitioned_system = []
 
+                            if len(arr1) > 0:
+                                partitioned_system = arr1
+
+                            if len(arr2) > 0:
+                                partitioned_system = arr2
+
                             if len(arr1) > 0 and len(arr2) > 0:
                                 cross_product = np.kron(arr1, arr2)
                                 partitioned_system = ordenar_matriz_product(cross_product)
-
-                            elif len(arr1) > 0:
-                                partitioned_system = arr1
-                            elif len(arr2) > 0:
-                                partitioned_system = arr2
 
                             if len(partitioned_system) > 0:
                                 # Convertir partitioned_system a array de NumPy si no lo es
@@ -110,6 +116,7 @@ def decomposition(ns, cs, cs_value, probabilities, states, st):
                                 # Calcular la Distancia de Wasserstein (EMD)
                                 # No puede tener arreglo vacio
                                 emd_distance = wasserstein_distance(original_system,partitioned_system)
+                                st.latex(rf"""\bullet {emd_distance}""")
                                 
                                 if emd_distance < min_emd:
                                     min_emd = emd_distance
@@ -118,11 +125,34 @@ def decomposition(ns, cs, cs_value, probabilities, states, st):
                             impresos.add(combinacion_actual)
                             impresos.add(combinacion_inversa)
 
-    with col2:
-        
-        st.subheader("Memoría")
+            st.text(len(impresos))
 
-        st.json(memory)
+    with col2:
+
+        st.subheader("Combinaciones Encontradas")
+
+        Todos = []
+            
+        for x in range(len(ns)):
+            Todos.append(ns[x]+'N')
+            
+        for x in range(len(cs)):
+            Todos.append(cs[x])
+
+        while len(Todos) > 2:
+
+            Final = firstStrategy.generar_combinaciones([Todos[0]], Todos[1:], True)
+            st.latex(f'{Final} - Unido')
+            Arreglo = firstStrategy.Cortar(Final)
+                
+            for x in Todos[3:] :
+                Arreglo = firstStrategy.generar_combinaciones(Arreglo[len(Arreglo)-1],Arreglo[:-1],True)
+                Arreglo = firstStrategy.Cortar(Arreglo)
+                st.latex(f'{Arreglo} - Unido')
+
+            Todos = Arreglo
+
+            st.text(len(Todos))
 
     return mejor_particion, round(min_emd, 5)
     
