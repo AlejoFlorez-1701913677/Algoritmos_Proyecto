@@ -12,10 +12,9 @@ from io import StringIO
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
+from backend.strategies.bruteForce import BruteForce
 from backend.strategies.minimaParticion import decomposition
-
 from backend.generator.probabilities import generatorProbabilities
-
 from backend.candidateSystemGenerator.candidateGenerator import indexCandidateSystem, marginalize_variableFuture, marginalize_variablePresent
 
 def format_partition_output(partition_result):
@@ -76,6 +75,51 @@ if data is not None:
     st.text(searchStatus)
 
     st.divider()
+
+    with st.expander("Fuerza Bruta"):
+
+        sysFB_candidateSystem_Perfect = []
+
+        st.divider()
+
+        st.title("¿Desea Crear un sistema Candidato?")
+
+        st.write("Llené los siguientes datos, teniendo en cuenta que solo se puede marginalizar variables que se encuentren continuas")
+        sysFB_candidateSystem = st.text_input("Sistema candidato - Fuerza Bruta", "ABC")
+
+        sysFB_execCandidateSystem = st.button("Obtener sistema candidato - Fuerza Bruta")
+
+        if sysFB_execCandidateSystem:
+
+            candidateSystem_Imperfect = indexCandidateSystem(result_matrix,sysFB_candidateSystem, varData)
+            fB_candidateSystem_Perfect = marginalize_variableFuture(candidateSystem_Imperfect,sysFB_candidateSystem, varData)
+            
+            st.subheader("Tabla de Sistema Candidato - Imperfecta  - Fuerza Bruta")
+            st.table(candidateSystem_Imperfect)
+
+            st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada) - Fuerza Bruta")
+            st.table(fB_candidateSystem_Perfect)
+
+            st.divider()
+
+        st.subheader("Subsistema")
+        
+        st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
+
+        sysFB_currentStatus = st.text_input("Estado Presente - Fuerza Bruta", "")
+        sysFB_nextStatus = st.text_input("Estado Futuro - Fuerza Bruta", "")
+
+        sysFB_execPairContruction = st.button("Obtener Pares - Fuerza Bruta")
+
+        if sysFB_execPairContruction:
+
+            st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
+
+            bruteForce = BruteForce(result_matrix, dataJson["stateSought"], states, sysFB_currentStatus, sysFB_nextStatus)
+            FB_mejor_particion, FB_min_emd = bruteForce.strategy(sysFB_nextStatus, sysFB_currentStatus)
+
+            st.subheader(f"Mejor Partición encontrada {FB_mejor_particion}")
+            st.subheader(f"Mejor EMD {FB_min_emd}",divider="gray")
 
     with st.expander("Primera Estrategia"):
 
