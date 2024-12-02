@@ -12,8 +12,8 @@ from backend.auxiliares import (
 
 from backend.marginalizacion import obtener_tabla_probabilidades
 
-class FirstStrategy:
-
+class ThirdStrategy:
+    
     def __init__(self, probabilities, cs_value, states, cs, ns):
         self.probabilities = probabilities
         self.cs_value = cs_value
@@ -24,7 +24,7 @@ class FirstStrategy:
         self.cs = cs
         self.ns = ns
 
-        st.write("Sistema Original")
+        st.write("Sistema Original - Estrategia 3")
         st.latex(rf"""\bullet \left(\frac{{{self.ns}ᵗ⁺¹}}{{{self.cs}ᵗ}}\right)""")
 
         self.original_system = obtener_tabla_probabilidades(
@@ -204,7 +204,7 @@ class FirstStrategy:
             #st.latex(f"{Final}")
         return Final
     
-    def strategy(self, ):
+    def strategy(self):
         
         st.header("Combinaciones Encontradas")
 
