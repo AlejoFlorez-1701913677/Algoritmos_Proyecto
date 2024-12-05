@@ -223,6 +223,7 @@ class FirstStrategy:
             Arreglo = self.Cortar(Final)
                     
             for x in Todos[3:] :
+                self.min_emd = float("inf")
                 Arreglo = self.generar_combinaciones(Arreglo[len(Arreglo)-1],Arreglo[:-1],True)
                 Arreglo = self.Cortar(Arreglo)
                 self.formatStrategie(Arreglo[0],Arreglo[1])

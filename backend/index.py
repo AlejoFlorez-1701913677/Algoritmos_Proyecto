@@ -196,16 +196,15 @@ if data is not None:
         
         st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
 
-        st2_sysC_currentStatus = st.text_input("Estado Presente - Estrategia 2", "")
-        st2_sysC_nextStatus = st.text_input("Estado Futuro - Estrategia 2", "")
+        st2_sysC_currentStatus = st.text_input("Estado Presente - Estrategia 2", "bc")
+        st2_sysC_nextStatus = st.text_input("Estado Futuro - Estrategia 2", "AB")
 
         st2_execPairContruction = st.button("Obtener Pares - Estrategia 2")
 
         if st2_execPairContruction:
-
             st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
 
-            secondtStrategy = SecondStrategy(result_matrix, dataJson["stateSought"], states, sysC_currentStatus, sysC_nextStatus)
+            secondtStrategy = SecondStrategy(result_matrix, dataJson["stateSought"], states, st2_sysC_currentStatus, st2_sysC_nextStatus, dataJson)
             mejor_particion, min_emd = secondtStrategy.strategy()
 
     with st.expander("Tercera Estrategia"):
