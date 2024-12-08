@@ -39,11 +39,7 @@ def format_partition_output(partition_result):
         "Particione de cs": particiones_cs_formateadas,
         "Distancia de EMD": distancia_emd,
     }
-
-    print("\n\n|===========================================================|")
-    print("|--- %s Segundos ---" % (time.time() - start_time),"|")
-    print("|===========================================================|")
-
+    
     return formatted_output
 
 st.title('Próyecto Final')
@@ -204,7 +200,7 @@ if data is not None:
         if st2_execPairContruction:
             st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
 
-            secondtStrategy = SecondStrategy(result_matrix, dataJson["stateSought"], states, st2_sysC_currentStatus, st2_sysC_nextStatus, dataJson)
+            secondtStrategy = SecondStrategy(result_matrix, dataJson["stateSought"], states, st2_sysC_currentStatus, st2_sysC_nextStatus, dataJson, st2_candidateSystem, varData)
             mejor_particion, min_emd = secondtStrategy.strategy()
 
     with st.expander("Tercera Estrategia"):

@@ -1,10 +1,10 @@
-
+import random
 import itertools
 import numpy as np
+import pandas as pd
 import streamlit as st
-import random
 
-from scipy.stats import wasserstein_distance
+from backend.candidateSystemGenerator.Marginalization import Marginalization
 
 from backend.auxiliares import (
     ordenar_matriz_product,
@@ -12,11 +12,13 @@ from backend.auxiliares import (
     repr_next_to_array,
 )
 
+from backend.candidateSystemGenerator.candidateGenerator import marginalize_variablePresent, indexCandidateSystem
+
 from backend.marginalizacion import obtener_tabla_probabilidades
 
 class SecondStrategy:
     
-    def __init__(self, probabilities, cs_value, states, cs, ns, futureTables):
+    def __init__(self, probabilities, cs_value, states, cs, ns, futureTables, st2_candidateSystem, varData):
         self.probabilities = probabilities
         self.cs_value = cs_value
         self.memory = {}
@@ -26,6 +28,7 @@ class SecondStrategy:
         self.cs = cs
         self.ns = ns
         self.futureTables = futureTables
+        self.marginalization = Marginalization(probabilities,st2_candidateSystem, varData)
 
         self.original_system = obtener_tabla_probabilidades(
             repr_current_to_array(self.cs, self.cs_value),
@@ -33,9 +36,7 @@ class SecondStrategy:
             self.probabilities,
             self.states,
         )
-
-        st.write("Validación Estado Original")
-        st.table(self.original_system)
+        
 
     def Cortar(self, Lista):
         Corte = Lista[-2:]
@@ -107,8 +108,15 @@ class SecondStrategy:
                 self.mejor_particion = [Copsel,Copia,emd_distance]
             
             st.text(f"{[Copsel,Copia,emd_distance]}")
+
+            for j in range(len(Copsel)):
+                self.marginalization.marginalize_variablePresent(Copsel[j][0], Copsel[j][1], self.futureTables['primogenitalTables'][Copsel[j][1]])
+                st.divider()
+                st.divider()
+
             Opciones.append([Copsel,Copia,emd_distance])
             seleccionados.remove(restantes[i])
+        return True
 
         st.subheader("Combinación Elegida",divider="gray")
         st.text(f"{self.mejor_particion[0],self.mejor_particion[1]}")

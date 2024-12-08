@@ -1,12 +1,4 @@
-import numpy as np
-from scipy.stats import wasserstein_distance
-from backend.marginalizacion import obtener_tabla_probabilidades
 
-from backend.auxiliares import (
-    ordenar_matriz_product,
-    repr_current_to_array,
-    repr_next_to_array,
-)
 
 # Obtiene la tabla eliminado las filas  que no se encuentre en el parametro de candidateSystem (Cuando el valor binario de la variable es 1)
 def indexCandidateSystem(probabilities, candidateSystem, full_system):
