@@ -18,7 +18,6 @@ from backend.strategies.SecondStrategy import SecondStrategy
 from backend.strategies.ThirdStrategy import ThirdStrategy
 
 from backend.generator.probabilities import generatorProbabilities
-from backend.candidateSystemGenerator.candidateGenerator import indexCandidateSystem, marginalize_variableFuture, marginalize_variablePresent
 
 def format_partition_output(partition_result):
     # Extraer las particiones de 'ns' y 'cs' junto con la distancia de EMD
@@ -135,6 +134,7 @@ if data is not None:
 
         if execCandidateSystem:
 
+            '''
             candidateSystem_Imperfect = indexCandidateSystem(result_matrix,candidateSystem, varData)
             candidateSystem_Perfect = marginalize_variableFuture(candidateSystem_Imperfect,candidateSystem, varData)
             
@@ -143,6 +143,7 @@ if data is not None:
 
             st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
             st.table(candidateSystem_Perfect)
+            '''
 
             st.divider()
 
@@ -164,29 +165,12 @@ if data is not None:
 
     with st.expander("Segunda Estrategia"):
 
-        st2_candidateSystem_Perfect = []
-
         st.divider()
 
         st.title("¿Desea Crear un sistema Candidato?")
 
         st.write("Llené los siguientes datos, teniendo en cuenta que solo se puede marginalizar variables que se encuentren continuas")
         st2_candidateSystem = st.text_input("Sistema candidato - Estrategia 2", "ABC")
-
-        st2_execCandidateSystem = st.button("Obtener sistema candidato - Estrategia 2")
-
-        if st2_execCandidateSystem:
-
-            st2_candidateSystem_Imperfect = indexCandidateSystem(result_matrix,st2_candidateSystem, varData)
-            st2_candidateSystem_Perfect = marginalize_variableFuture(st2_candidateSystem_Imperfect,st2_candidateSystem, varData)
-            
-            st.subheader("Tabla de Sistema Candidato - Imperfecta")
-            st.table(st2_candidateSystem_Imperfect)
-
-            st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
-            st.table(st2_candidateSystem_Perfect)
-
-            st.divider()
 
         st.subheader("Subsistema")
         

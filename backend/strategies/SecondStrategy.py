@@ -12,8 +12,6 @@ from backend.auxiliares import (
     repr_next_to_array,
 )
 
-from backend.candidateSystemGenerator.candidateGenerator import marginalize_variablePresent, indexCandidateSystem
-
 from backend.marginalizacion import obtener_tabla_probabilidades
 
 class SecondStrategy:
@@ -30,12 +28,24 @@ class SecondStrategy:
         self.futureTables = futureTables
         self.marginalization = Marginalization(probabilities,st2_candidateSystem, varData)
 
-        self.original_system = obtener_tabla_probabilidades(
-            repr_current_to_array(self.cs, self.cs_value),
-            repr_next_to_array(self.ns),
-            self.probabilities,
-            self.states,
-        )
+        st.write("Estado Original")
+        st.text(f"{self.cs_value}")
+
+        st2_candidateSystem_Imperfect = self.marginalization.indexCandidateSystem()
+        st2_candidateSystem_Perfect = self.marginalization.marginalize_variableFuture(st2_candidateSystem_Imperfect)
+
+        st.subheader("Tabla de Sistema Candidato - Imperfecta")
+        st.table(st2_candidateSystem_Imperfect)
+
+        st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
+        st.table(st2_candidateSystem_Perfect)
+
+        self.original_system = st2_candidateSystem_Perfect[(int(self.cs_value, 2))]
+
+        st.write("Validación Estado Original")
+        st.text(f"{self.original_system}")    
+
+        st.divider()    
         
 
     def Cortar(self, Lista):
@@ -80,6 +90,26 @@ class SecondStrategy:
 
         return value
 
+    # Función de comparación personalizada
+    def comparar(self,secuencia):
+        # Se considera solo el primer carácter de la secuencia para ordenar
+        return secuencia[0]
+
+    def validateElementCandidate(self, arrToValidate):
+    
+        # Ordenar con la función personalizada
+        secuencias_ordenadas = sorted(arrToValidate, key=self.comparar, reverse=True)
+
+        if not all(len(secuencia) == 2 for secuencia in secuencias_ordenadas):  # Verifica que cada secuencia tenga 2 caracteres
+            return False
+        
+        # Verifica que todos los elementos terminen con la misma letra mayúscula
+        letras_finales = {secuencia[1] for secuencia in secuencias_ordenadas}
+        if len(letras_finales) != 1:
+            return False
+        
+        return True
+
     def generar_combinaciones(self, seleccionados, restantes, Primero):
 
         st.divider()
@@ -100,23 +130,41 @@ class SecondStrategy:
             Copia = restantes[:]
             Copia.remove(restantes[i])
 
-            # Calcular la Distancia de Wasserstein (EMD)
-            emd_distance = random.randint(1,100)
-                                
-            if (emd_distance > 0.0) and (emd_distance < self.min_emd):
-                self.min_emd = emd_distance
-                self.mejor_particion = [Copsel,Copia,emd_distance]
+            validateElemCand = self.validateElementCandidate(Copsel)
             
-            st.text(f"{[Copsel,Copia,emd_distance]}")
+            marginalizedTable = self.futureTables['primogenitalTables'][Copsel[0][1]]
+            enableVal = True
+
+            # Calcular la Distancia de Wasserstein (EMD)
+            emd_distance = float('inf')
+
+            st.info(f"Inicio de Proceso para {Copsel}")
 
             for j in range(len(Copsel)):
-                self.marginalization.marginalize_variablePresent(Copsel[j][0], Copsel[j][1], self.futureTables['primogenitalTables'][Copsel[j][1]])
-                st.divider()
-                st.divider()
+                if(validateElemCand):
+                    
+                    st.warning('Marginalización múltiple detectada', icon="ℹ️")
+                    marginalizedTable= self.marginalization.marginalize_variablePresent(Copsel[j][0], Copsel[j][1], marginalizedTable,enableVal)
+                    enableVal=False
+                    st.warning('Marginalización múltiple finalizada', icon="✅")
+                else:
+                    self.marginalization.marginalize_variablePresent(Copsel[j][0], Copsel[j][1], self.futureTables['primogenitalTables'][Copsel[j][1]])
+
+                # Calcular la Distancia de Wasserstein (EMD)
+                emd_distance = random.randint(1,100)
+                                    
+                if (emd_distance > 0.0) and (emd_distance < self.min_emd):
+                    self.min_emd = emd_distance
+                    self.mejor_particion = [Copsel,Copia,emd_distance]
+                
+                st.subheader(f"EMD Distance: {[Copsel,Copia,emd_distance]}")
+                
+            st.divider()
+            st.info(f"Final de Proceso para {Copsel}")
+            st.divider()
 
             Opciones.append([Copsel,Copia,emd_distance])
             seleccionados.remove(restantes[i])
-        return True
 
         st.subheader("Combinación Elegida",divider="gray")
         st.text(f"{self.mejor_particion[0],self.mejor_particion[1]}")
@@ -128,13 +176,16 @@ class SecondStrategy:
             st.latex(f"{Final}")
         return Final
     
-    def strategy(self, ):
+    def strategy(self):
         
         st.header("Combinaciones Encontradas")
 
+        self.cs = ''.join(sorted(self.cs, reverse=True))
+        self.ns = ''.join(sorted(self.ns, reverse=True))
+
         Todos = [''.join(comb) for comb in itertools.product(self.cs, self.ns)]
 
-        st.text(f"{Todos}")
+        st.subheader(f"Procesando {Todos}")
 
         while len(Todos) > 2:
 

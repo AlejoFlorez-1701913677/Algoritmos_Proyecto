@@ -20,9 +20,9 @@
                 1
             ],
             [
+                1,
                 0,
-                0,
-                0,
+                1,
                 0,
                 0,
                 0,
@@ -153,6 +153,6 @@
             ]
         ]
     },
-    "stateSought": "110",
+    "stateSought": "011",
     "candidateSysstem": ""
 }
