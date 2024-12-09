@@ -162,7 +162,7 @@ class SecondStrategy:
                 for j in range(len(myCopsel[iSubSeq])):
                     subSeqCopsel = myCopsel[iSubSeq][j]
 
-                    if(len(Copsel[iSubSeq]) > 1):
+                    if(len(myCopsel[iSubSeq]) > 1):
                         st.warning('Marginalización múltiple detectada', icon="ℹ️")
                         if(j == 0):
                             marginalizedTable.append(self.marginalization.marginalize_variablePresent(subSeqCopsel[0], subSeqCopsel[1], self.futureTables['primogenitalTables'][subSeqCopsel[1]],True))
