@@ -4,6 +4,9 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+
+from collections import Counter, defaultdict
+
 from backend.candidateSystemGenerator.Marginalization import Marginalization
 
 from backend.auxiliares import (
@@ -35,10 +38,10 @@ class SecondStrategy:
         st2_candidateSystem_Perfect = self.marginalization.marginalize_variableFuture(st2_candidateSystem_Imperfect)
 
         st.subheader("Tabla de Sistema Candidato - Imperfecta")
-        st.table(st2_candidateSystem_Imperfect)
+        #st.table(st2_candidateSystem_Imperfect)
 
         st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
-        st.table(st2_candidateSystem_Perfect)
+        #st.table(st2_candidateSystem_Perfect)
 
         self.original_system = st2_candidateSystem_Perfect[(int(self.cs_value, 2))]
 
@@ -46,7 +49,6 @@ class SecondStrategy:
         st.text(f"{self.original_system}")    
 
         st.divider()    
-        
 
     def Cortar(self, Lista):
         Corte = Lista[-2:]
@@ -93,22 +95,34 @@ class SecondStrategy:
     # Función de comparación personalizada
     def comparar(self,secuencia):
         # Se considera solo el primer carácter de la secuencia para ordenar
-        return secuencia[0]
+        return (secuencia[1], secuencia[0])
 
     def validateElementCandidate(self, arrToValidate):
     
         # Ordenar con la función personalizada
         secuencias_ordenadas = sorted(arrToValidate, key=self.comparar, reverse=True)
+        
+        # Obtener las letras finales de cada secuencia
+        letras_finales = [secuencia[1] for secuencia in secuencias_ordenadas]
 
-        if not all(len(secuencia) == 2 for secuencia in secuencias_ordenadas):  # Verifica que cada secuencia tenga 2 caracteres
-            return False
-        
-        # Verifica que todos los elementos terminen con la misma letra mayúscula
-        letras_finales = {secuencia[1] for secuencia in secuencias_ordenadas}
-        if len(letras_finales) != 1:
-            return False
-        
-        return True
+        # Contar cuántas veces aparece cada letra final
+        contador = Counter(letras_finales)
+
+        # Usamos defaultdict para crear un diccionario donde los valores son listas
+        groupedSubSeq = defaultdict(list)
+
+        # Agrupar las secuencias según su letra mayúscula final
+        for subsecuencia in secuencias_ordenadas:
+            letra_final = subsecuencia[1]  # Tomamos la letra mayúscula final
+            groupedSubSeq[letra_final].append(subsecuencia)
+
+        # Convertir el diccionario a una lista de sub-arreglos
+        sub_arreglos = list(groupedSubSeq.values())
+
+        if any(count >= 2 for count in contador.values()):
+            return True, sub_arreglos
+
+        return False, sub_arreglos
 
     def generar_combinaciones(self, seleccionados, restantes, Primero):
 
@@ -130,36 +144,40 @@ class SecondStrategy:
             Copia = restantes[:]
             Copia.remove(restantes[i])
 
-            validateElemCand = self.validateElementCandidate(Copsel)
-            
-            marginalizedTable = self.futureTables['primogenitalTables'][Copsel[0][1]]
-            enableVal = True
+            # creo que copsel no debería reescribirse, se debe trabajar com otra variable y dejar Copsel para el manejo de las estrategia de josé 
+            validateElemCand, myCopsel = self.validateElementCandidate(Copsel)
+            marginalizedTable = []
 
             # Calcular la Distancia de Wasserstein (EMD)
             emd_distance = float('inf')
 
             st.info(f"Inicio de Proceso para {Copsel}")
 
-            for j in range(len(Copsel)):
-                if(validateElemCand):
-                    
-                    st.warning('Marginalización múltiple detectada', icon="ℹ️")
-                    marginalizedTable= self.marginalization.marginalize_variablePresent(Copsel[j][0], Copsel[j][1], marginalizedTable,enableVal)
-                    enableVal=False
-                    st.warning('Marginalización múltiple finalizada', icon="✅")
-                else:
-                    self.marginalization.marginalize_variablePresent(Copsel[j][0], Copsel[j][1], self.futureTables['primogenitalTables'][Copsel[j][1]])
+            for iSubSeq in range(len(myCopsel)):
 
-                # Calcular la Distancia de Wasserstein (EMD)
-                emd_distance = random.randint(1,100)
+                for j in range(len(myCopsel[iSubSeq])):
+                    subSeqCopsel = myCopsel[iSubSeq][j]
+
+                    if(len(Copsel[iSubSeq]) > 1):
+                        st.warning('Marginalización múltiple detectada', icon="ℹ️")
+                        if(j == 0):
+                            marginalizedTable.append(self.marginalization.marginalize_variablePresent(subSeqCopsel[0], subSeqCopsel[1], self.futureTables['primogenitalTables'][subSeqCopsel[1]],True))
+                        else:
+                            st.table(marginalizedTable[(len(marginalizedTable) - 1)])
+                            marginalizedTable.append(self.marginalization.marginalize_variablePresent(subSeqCopsel[0], subSeqCopsel[1], marginalizedTable[(len(marginalizedTable) - 1)], False))
+                        st.warning('Marginalización múltiple finalizada', icon="✅")
+                    else:
+                        marginalizedTable.append(self.marginalization.marginalize_variablePresent(subSeqCopsel[0], subSeqCopsel[1], self.futureTables['primogenitalTables'][subSeqCopsel[1]]))
+
+            # Calcular la Distancia de Wasserstein (EMD)
+            emd_distance = random.randint(1,100)
                                     
-                if (emd_distance > 0.0) and (emd_distance < self.min_emd):
-                    self.min_emd = emd_distance
-                    self.mejor_particion = [Copsel,Copia,emd_distance]
-                
-                st.subheader(f"EMD Distance: {[Copsel,Copia,emd_distance]}")
+            if (emd_distance > 0.0) and (emd_distance < self.min_emd):
+                self.min_emd = emd_distance
+                self.mejor_particion = [Copsel,Copia,emd_distance]
                 
             st.divider()
+            st.subheader(f"EMD Distance: {[Copsel,Copia,emd_distance]}")    
             st.info(f"Final de Proceso para {Copsel}")
             st.divider()
 
