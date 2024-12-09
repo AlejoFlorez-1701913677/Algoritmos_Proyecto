@@ -136,7 +136,7 @@ class FirstStrategy:
         return ''.join(ns1_flattened),''.join(cs1_flattened),''.join(ns2_flattened),''.join(cs2_flattened)
 
     def generar_combinaciones(self, seleccionados, restantes, Primero):
-
+        self.min_emd = float("inf")
         st.divider()
         st.subheader("Sistema a combinar:",divider="gray")
         
@@ -159,6 +159,9 @@ class FirstStrategy:
             Copsel=seleccionados[:]
             Copia = restantes[:]
             Copia.remove(restantes[i])
+
+            if not Copia:
+                return seleccionados
 
             ns1,cs1,ns2,cs2 = self.formatStrategie(Copsel,Copia)
 

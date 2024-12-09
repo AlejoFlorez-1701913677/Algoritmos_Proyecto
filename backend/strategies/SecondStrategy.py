@@ -136,13 +136,16 @@ class SecondStrategy:
             Combinacion[1]=len(seleccionados)
 
         if not restantes:
-            return seleccionados
-        
+                return seleccionados
+
         for i in range(len(restantes)):
             seleccionados.append(restantes[i])
             Copsel=seleccionados[:]
             Copia = restantes[:]
             Copia.remove(restantes[i])
+
+            if not Copia:
+                return seleccionados
 
             # creo que copsel no debería reescribirse, se debe trabajar com otra variable y dejar Copsel para el manejo de las estrategia de josé 
             validateElemCand, myCopsel = self.validateElementCandidate(Copsel)
@@ -152,6 +155,7 @@ class SecondStrategy:
             emd_distance = float('inf')
 
             st.info(f"Inicio de Proceso para {Copsel}")
+            st.info(f"Restantes del Proceso {Copia}")
 
             for iSubSeq in range(len(myCopsel)):
 
