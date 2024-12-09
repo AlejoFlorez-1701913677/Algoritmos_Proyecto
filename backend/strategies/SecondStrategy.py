@@ -28,6 +28,7 @@ class SecondStrategy:
         self.mejor_particion = []
         self.cs = cs
         self.ns = ns
+        self.candidateSystem = st2_candidateSystem
         self.futureTables = futureTables
         self.marginalization = Marginalization(probabilities,st2_candidateSystem, varData)
 
@@ -119,10 +120,19 @@ class SecondStrategy:
         # Convertir el diccionario a una lista de sub-arreglos
         sub_arreglos = list(groupedSubSeq.values())
 
-        if any(count >= 2 for count in contador.values()):
-            return True, sub_arreglos
+        return sub_arreglos
 
-        return False, sub_arreglos
+    def selectedRowCandSys(self, tableMarginalized, varMarginalized):
+        
+        rowFound = ""
+
+        for i, valor in enumerate(self.cs_value):
+            letra = self.candidateSystem[::-1][i]  # Obtenemos la letra correspondiente (A, B, C, ...)
+            if(letra != varMarginalized.upper()):
+                rowFound +=valor
+                #st.text(letra)
+                #st.text(valor)
+        return tableMarginalized[int(rowFound,2)]
 
     def generar_combinaciones(self, seleccionados, restantes, Primero):
 
@@ -148,14 +158,16 @@ class SecondStrategy:
                 return seleccionados
 
             # creo que copsel no debería reescribirse, se debe trabajar com otra variable y dejar Copsel para el manejo de las estrategia de josé 
-            validateElemCand, myCopsel = self.validateElementCandidate(Copsel)
+            myCopsel = self.validateElementCandidate(Copsel)
             marginalizedTable = []
+            
+            # Arreglo de filas selccionadas a base del valor del estado original
+            rowsSystCandSelected = []
 
             # Calcular la Distancia de Wasserstein (EMD)
             emd_distance = float('inf')
 
             st.info(f"Inicio de Proceso para {Copsel}")
-            st.info(f"Restantes del Proceso {Copia}")
 
             for iSubSeq in range(len(myCopsel)):
 
@@ -167,12 +179,15 @@ class SecondStrategy:
                         if(j == 0):
                             marginalizedTable.append(self.marginalization.marginalize_variablePresent(subSeqCopsel[0], subSeqCopsel[1], self.futureTables['primogenitalTables'][subSeqCopsel[1]],True))
                         else:
-                            st.table(marginalizedTable[(len(marginalizedTable) - 1)])
                             marginalizedTable.append(self.marginalization.marginalize_variablePresent(subSeqCopsel[0], subSeqCopsel[1], marginalizedTable[(len(marginalizedTable) - 1)], False))
                         st.warning('Marginalización múltiple finalizada', icon="✅")
                     else:
-                        marginalizedTable.append(self.marginalization.marginalize_variablePresent(subSeqCopsel[0], subSeqCopsel[1], self.futureTables['primogenitalTables'][subSeqCopsel[1]]))
+                        rawTableMar = self.marginalization.marginalize_variablePresent(subSeqCopsel[0], subSeqCopsel[1], self.futureTables['primogenitalTables'][subSeqCopsel[1]])
+                        rowsSystCandSelected.append(self.selectedRowCandSys(rawTableMar,subSeqCopsel[0]))
+                        marginalizedTable.append(rawTableMar)
 
+            #st.table(marginalizedTable)
+            return True
             # Calcular la Distancia de Wasserstein (EMD)
             emd_distance = random.randint(1,100)
                                     
