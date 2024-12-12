@@ -127,12 +127,32 @@ class SecondStrategy:
         rowFound = ""
 
         for i, valor in enumerate(self.cs_value):
-            letra = self.candidateSystem[::-1][i]  # Obtenemos la letra correspondiente (A, B, C, ...)
+            letra = self.candidateSystem[i]  # Obtenemos la letra correspondiente (A, B, C, ...)
             if(letra != varMarginalized.upper()):
                 rowFound +=valor
                 #st.text(letra)
                 #st.text(valor)
+
+        #st.subheader(int(rowFound,2),divider="orange")
         return tableMarginalized[int(rowFound,2)]
+
+    def ope1EMD(self, rowsSystCandSelected):
+
+        # Inicializamos la lista de resultados
+        result = []
+        
+        # Crear todas las combinaciones posibles de los índices
+        # Tomamos un elemento de cada fila (de las dos columnas)
+        combinaciones = list(itertools.product(*rowsSystCandSelected))
+        
+        # Multiplicamos los elementos de cada combinación
+        for combinacion in combinaciones:
+            resultado = 1
+            for elem in combinacion:
+                resultado *= elem
+            result.append(resultado)
+
+        return result
 
     def generar_combinaciones(self, seleccionados, restantes, Primero):
 
@@ -140,6 +160,7 @@ class SecondStrategy:
 
         Opciones = []
         Combinacion =[False,1]
+        
 
         if isinstance(seleccionados,list) and len(seleccionados)>1 and Primero:
             Combinacion[0]=True
@@ -166,6 +187,7 @@ class SecondStrategy:
 
             # Calcular la Distancia de Wasserstein (EMD)
             emd_distance = float('inf')
+            futureNoMarginalized = ""
 
             st.info(f"Inicio de Proceso para {Copsel}")
 
@@ -173,6 +195,8 @@ class SecondStrategy:
 
                 for j in range(len(myCopsel[iSubSeq])):
                     subSeqCopsel = myCopsel[iSubSeq][j]
+                    
+                    futureNoMarginalized += subSeqCopsel[1]
 
                     if(len(myCopsel[iSubSeq]) > 1):
                         st.warning('Marginalización múltiple detectada', icon="ℹ️")
@@ -186,7 +210,13 @@ class SecondStrategy:
                         rowsSystCandSelected.append(self.selectedRowCandSys(rawTableMar,subSeqCopsel[0]))
                         marginalizedTable.append(rawTableMar)
 
-            #st.table(marginalizedTable)
+            missing_var = list(set(self.candidateSystem) - set(futureNoMarginalized))[0]
+            rowsSystCandSelected.append(self.selectedRowCandSys(self.marginalization.reOrderArray(self.futureTables['primogenitalTables'][missing_var]),futureNoMarginalized))
+
+            emdOp1 = self.ope1EMD(rowsSystCandSelected)
+
+            st.table(emdOp1)
+            
             return True
             # Calcular la Distancia de Wasserstein (EMD)
             emd_distance = random.randint(1,100)
