@@ -162,28 +162,22 @@ class SecondStrategy:
 
         return result
     
-    def calculateEMD(self, futureNoMarginalized, rowsSystCandSelected, isOpe2 = False):
+    def calculateEMD(self, futureNoMarginalized, rowsSystCandSelected):
 
-        if not isOpe2:
-            missing_var = list(set(self.candidateSystem) - set(futureNoMarginalized))[0]
-            rowsSystCandSelected[missing_var] = self.selectedRowCandSys(self.marginalization.reOrderArray(self.futureTables['primogenitalTables'][missing_var]),futureNoMarginalized)
-            return self.opeEMD(rowsSystCandSelected)
-        else:
+        rowsSystCandSelectedOpe2 = {}
+    
+        for rowSysCandSelect in range(len(futureNoMarginalized)):
+            rowsSystCandSelectedOpe2[futureNoMarginalized[rowSysCandSelect]] = rowsSystCandSelected[futureNoMarginalized[rowSysCandSelect]]
 
-            rowsSystCandSelectedOpe2 = {}
-            
-            rowsSystCandSelectedOpe2[futureNoMarginalized] = rowsSystCandSelected[futureNoMarginalized]
+        missing_vars = list(set(self.candidateSystem) - set(futureNoMarginalized))
 
-            missing_vars = list(set(self.candidateSystem) - set(futureNoMarginalized))
+        for missingVar in range(len(missing_vars)):
+            varFuture = missing_vars[::-1][missingVar]
+            rowsSystCandSelectedOpe2[varFuture] = self.selectedRowCandSys(self.marginalization.reOrderArray(self.futureTables['primogenitalTables'][varFuture]),futureNoMarginalized)
 
-            st.subheader(f"Las variables buscadas son {missing_vars}")
-
-            for missingVar in range(len(missing_vars)):
-                varFuture = missing_vars[::-1][missingVar]
-                rowsSystCandSelectedOpe2[varFuture] = self.selectedRowCandSys(self.marginalization.reOrderArray(self.futureTables['primogenitalTables'][varFuture]),futureNoMarginalized)
-                
-            #st.table(rowsSystCandSelectedOpe2)
-            return self.opeEMD(rowsSystCandSelectedOpe2)
+        #st.text("EMD Operando")
+        #st.table(self.opeEMD(rowsSystCandSelectedOpe2))
+        return self.opeEMD(rowsSystCandSelectedOpe2)
 
     def generar_combinaciones(self, seleccionados, restantes, Primero):
 
@@ -261,8 +255,8 @@ class SecondStrategy:
             #st.table(rowsSystCandSelected) 
             
             # Revisar Calculo EMD con Variables faltantes dinamicos
-            op1EmdDistance = wasserstein_distance(self.original_system,self.calculateEMD(futureNoMarginalized, rowsSystCandSelected), False)
-            op2EmdDistance = wasserstein_distance(self.original_system,self.calculateEMD(myCopsel[iSubSeq][0][1], rowsSystCandSelected, False))
+            op1EmdDistance = wasserstein_distance(self.original_system,self.calculateEMD(futureNoMarginalized, rowsSystCandSelected))
+            op2EmdDistance = wasserstein_distance(self.original_system,self.calculateEMD(myCopsel[iSubSeq][0][1], rowsSystCandSelected))
 
             # Calcular la Distancia de Wasserstein (EMD)
             emd_distance = op1EmdDistance - op2EmdDistance
@@ -281,7 +275,7 @@ class SecondStrategy:
             seleccionados.remove(restantes[i])
 
         st.subheader("Combinación Elegida",divider="gray")
-        st.text(f"{self.mejor_particion[0],self.mejor_particion[1]}")
+        #st.text(f"{self.mejor_particion[0],self.mejor_particion[1]}")
         seleccion = min(Opciones, key=lambda x: x[2])
         Final= self.generar_combinaciones(seleccion[0], seleccion[1], False)
 
