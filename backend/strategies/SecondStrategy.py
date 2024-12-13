@@ -3,6 +3,7 @@ import itertools
 import numpy as np
 import pandas as pd
 import streamlit as st
+from scipy.stats import wasserstein_distance
 
 
 from collections import Counter, defaultdict
@@ -128,22 +129,29 @@ class SecondStrategy:
 
         for i, valor in enumerate(self.cs_value):
             letra = self.candidateSystem[i]  # Obtenemos la letra correspondiente (A, B, C, ...)
-            if(letra != varMarginalized.upper()):
+            if(letra not in varMarginalized.upper()):
                 rowFound +=valor
                 #st.text(letra)
                 #st.text(valor)
 
+        #st.divider()
         #st.subheader(int(rowFound,2),divider="orange")
         return tableMarginalized[int(rowFound,2)]
 
-    def ope1EMD(self, rowsSystCandSelected):
+    def opeEMD(self, rowsSystCandSelected):
+
+        orderedObj = {k: rowsSystCandSelected[k] for k in sorted(rowsSystCandSelected)}
+        rowsSystCandOrdered = []
+
+        for key in orderedObj:
+            rowsSystCandOrdered.append(orderedObj[key])
 
         # Inicializamos la lista de resultados
         result = []
         
         # Crear todas las combinaciones posibles de los índices
         # Tomamos un elemento de cada fila (de las dos columnas)
-        combinaciones = list(itertools.product(*rowsSystCandSelected))
+        combinaciones = list(itertools.product(*rowsSystCandOrdered))
         
         # Multiplicamos los elementos de cada combinación
         for combinacion in combinaciones:
@@ -153,6 +161,29 @@ class SecondStrategy:
             result.append(resultado)
 
         return result
+    
+    def calculateEMD(self, futureNoMarginalized, rowsSystCandSelected, isOpe2 = False):
+
+        if not isOpe2:
+            missing_var = list(set(self.candidateSystem) - set(futureNoMarginalized))[0]
+            rowsSystCandSelected[missing_var] = self.selectedRowCandSys(self.marginalization.reOrderArray(self.futureTables['primogenitalTables'][missing_var]),futureNoMarginalized)
+            return self.opeEMD(rowsSystCandSelected)
+        else:
+
+            rowsSystCandSelectedOpe2 = {}
+            
+            rowsSystCandSelectedOpe2[futureNoMarginalized] = rowsSystCandSelected[futureNoMarginalized]
+
+            missing_vars = list(set(self.candidateSystem) - set(futureNoMarginalized))
+
+            st.subheader(f"Las variables buscadas son {missing_vars}")
+
+            for missingVar in range(len(missing_vars)):
+                varFuture = missing_vars[::-1][missingVar]
+                rowsSystCandSelectedOpe2[varFuture] = self.selectedRowCandSys(self.marginalization.reOrderArray(self.futureTables['primogenitalTables'][varFuture]),futureNoMarginalized)
+                
+            #st.table(rowsSystCandSelectedOpe2)
+            return self.opeEMD(rowsSystCandSelectedOpe2)
 
     def generar_combinaciones(self, seleccionados, restantes, Primero):
 
@@ -161,7 +192,6 @@ class SecondStrategy:
         Opciones = []
         Combinacion =[False,1]
         
-
         if isinstance(seleccionados,list) and len(seleccionados)>1 and Primero:
             Combinacion[0]=True
             Combinacion[1]=len(seleccionados)
@@ -183,11 +213,15 @@ class SecondStrategy:
             marginalizedTable = []
             
             # Arreglo de filas selccionadas a base del valor del estado original
-            rowsSystCandSelected = []
+            rowsSystCandSelected = {}
 
-            # Calcular la Distancia de Wasserstein (EMD)
-            emd_distance = float('inf')
             futureNoMarginalized = ""
+
+            # Tabla Marginalizada Cruda.
+            rawTableMar = []
+
+            # Validación de Variables ya Marginalizadas
+            marginalizedVars = ""
 
             st.info(f"Inicio de Proceso para {Copsel}")
 
@@ -200,34 +234,47 @@ class SecondStrategy:
 
                     if(len(myCopsel[iSubSeq]) > 1):
                         st.warning('Marginalización múltiple detectada', icon="ℹ️")
+
+                        #Marginalización - Primera iteración
                         if(j == 0):
-                            marginalizedTable.append(self.marginalization.marginalize_variablePresent(subSeqCopsel[0], subSeqCopsel[1], self.futureTables['primogenitalTables'][subSeqCopsel[1]],True))
+                            rawTableMar = self.marginalization.marginalize_variablePresent(subSeqCopsel[0], subSeqCopsel[1], self.futureTables['primogenitalTables'][subSeqCopsel[1]],True)
+
+                        #Marginalización - última iteración
+                        elif (j == (len(myCopsel[iSubSeq]) -1)):
+                            rawTableMar = self.marginalization.marginalize_variablePresent(subSeqCopsel[0], subSeqCopsel[1], marginalizedTable[(len(marginalizedTable) - 1)], False)
+                            rowsSystCandSelected[subSeqCopsel[1]] = self.selectedRowCandSys(rawTableMar,marginalizedVars+subSeqCopsel[0])
+
+                        #Marginalización - Caso Promedio
                         else:
-                            marginalizedTable.append(self.marginalization.marginalize_variablePresent(subSeqCopsel[0], subSeqCopsel[1], marginalizedTable[(len(marginalizedTable) - 1)], False))
+                            rawTableMar = self.marginalization.marginalize_variablePresent(subSeqCopsel[0], subSeqCopsel[1], marginalizedTable[(len(marginalizedTable) - 1)], False)
+                        
+                        marginalizedVars += subSeqCopsel[0]
+
                         st.warning('Marginalización múltiple finalizada', icon="✅")
                     else:
                         rawTableMar = self.marginalization.marginalize_variablePresent(subSeqCopsel[0], subSeqCopsel[1], self.futureTables['primogenitalTables'][subSeqCopsel[1]])
-                        rowsSystCandSelected.append(self.selectedRowCandSys(rawTableMar,subSeqCopsel[0]))
-                        marginalizedTable.append(rawTableMar)
+                        rowsSystCandSelected[subSeqCopsel[1]] = self.selectedRowCandSys(rawTableMar,subSeqCopsel[0])
+                    
+                    marginalizedTable.append(rawTableMar)
 
-            missing_var = list(set(self.candidateSystem) - set(futureNoMarginalized))[0]
-            rowsSystCandSelected.append(self.selectedRowCandSys(self.marginalization.reOrderArray(self.futureTables['primogenitalTables'][missing_var]),futureNoMarginalized))
-
-            emdOp1 = self.ope1EMD(rowsSystCandSelected)
-
-            st.table(emdOp1)
+            #st.text("Tabla Sys Can Selected")
+            #st.table(rowsSystCandSelected) 
             
-            return True
+            # Revisar Calculo EMD con Variables faltantes dinamicos
+            op1EmdDistance = wasserstein_distance(self.original_system,self.calculateEMD(futureNoMarginalized, rowsSystCandSelected), False)
+            op2EmdDistance = wasserstein_distance(self.original_system,self.calculateEMD(myCopsel[iSubSeq][0][1], rowsSystCandSelected, False))
+
             # Calcular la Distancia de Wasserstein (EMD)
-            emd_distance = random.randint(1,100)
+            emd_distance = op1EmdDistance - op2EmdDistance
+
+            st.warning(f"El calculo de EMD es {emd_distance}")
                                     
             if (emd_distance > 0.0) and (emd_distance < self.min_emd):
                 self.min_emd = emd_distance
                 self.mejor_particion = [Copsel,Copia,emd_distance]
                 
-            st.divider()
-            st.subheader(f"EMD Distance: {[Copsel,Copia,emd_distance]}")    
             st.info(f"Final de Proceso para {Copsel}")
+            st.divider()
             st.divider()
 
             Opciones.append([Copsel,Copia,emd_distance])
