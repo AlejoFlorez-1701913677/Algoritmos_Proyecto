@@ -29,6 +29,7 @@ class SecondStrategy:
         self.mejor_particion = []
         self.cs = cs
         self.ns = ns
+        self.fullSystem = varData
         self.candidateSystem = st2_candidateSystem
         self.futureTables = futureTables
         self.marginalization = Marginalization(probabilities,st2_candidateSystem, varData)
@@ -45,6 +46,7 @@ class SecondStrategy:
         st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
         #st.table(st2_candidateSystem_Perfect)
 
+        st.text((int(self.cs_value, 2)))
         self.original_system = st2_candidateSystem_Perfect[(int(self.cs_value, 2))]
 
         st.write("Validación Estado Original")
@@ -127,15 +129,18 @@ class SecondStrategy:
         
         rowFound = ""
 
+        #st.subheader(f" csValue {varMarginalized}",divider="orange")
+
         for i, valor in enumerate(self.cs_value):
-            letra = self.candidateSystem[i]  # Obtenemos la letra correspondiente (A, B, C, ...)
+
+            letra = self.fullSystem[i]  # Obtenemos la letra correspondiente (A, B, C, ...)
             if(letra not in varMarginalized.upper()):
                 rowFound +=valor
                 #st.text(letra)
                 #st.text(valor)
 
         #st.divider()
-        #st.subheader(int(rowFound,2),divider="orange")
+        #st.subheader(f"Fila Buscada {int(rowFound,2)}",divider="orange")
         return tableMarginalized[int(rowFound,2)]
 
     def opeEMD(self, rowsSystCandSelected):
@@ -171,9 +176,18 @@ class SecondStrategy:
 
         missing_vars = list(set(self.candidateSystem) - set(futureNoMarginalized))
 
+        #st.subheader(f" futureNoMarginalized {futureNoMarginalized} - missing_vars {missing_vars}",divider="orange")
+        
         for missingVar in range(len(missing_vars)):
             varFuture = missing_vars[::-1][missingVar]
+
+            #st.subheader(f" varFuture {varFuture}")
+            #st.table(self.futureTables['primogenitalTables'][varFuture])
+
             rowsSystCandSelectedOpe2[varFuture] = self.selectedRowCandSys(self.marginalization.reOrderArray(self.futureTables['primogenitalTables'][varFuture]),futureNoMarginalized)
+
+            #st.text(" rowsCandidate")
+            #st.table(rowsSystCandSelectedOpe2)
 
         #st.text("EMD Operando")
         #st.table(self.opeEMD(rowsSystCandSelectedOpe2))
