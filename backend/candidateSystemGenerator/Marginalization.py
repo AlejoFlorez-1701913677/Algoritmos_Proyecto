@@ -78,29 +78,24 @@ class Marginalization:
             raise ValueError("Debe faltar solo una variable en el sistema candidato.")
 
         # Índice de la variable faltante en full_system
-        missing_var_index = self.candidateSystem.index(cs)
+        missing_var_index = self.candidateSystem[::-1].index(cs)
 
         # Crear nueva tabla n x n para almacenar el resultado
         result_table = [[-1] * column for _ in range(int(row/2))]
         rowResult = -1
 
-        #st.text("Aleoj ")
+        #st.text("Table Cut")
         #st.table(tableCut)
-        #st.text(self.candidateSystem)
-        st.text(missing_var_index)
-        
+
         # Marginalizar la variable faltante
         for rowTraveled in range(row):  # Ahora solo iteramos hasta n
 
             # Calcular la fila emparejada cambiando solo el bit de la variable faltante
             paired_row = rowTraveled ^ (1 << (len(self.candidateSystem) - missing_var_index - 1))
-
-            #st.text(f"paired_row - {paired_row} - rowTraveled {rowTraveled}")
-            #st.table(result_table)
-
-            #st.text(paired_row)
+            
+            #st.text(f"paired_row - {paired_row}  - rowTraveled {rowTraveled} ")
+            
             # Evitar duplicados, solo multiplicar si paired_row es mayor que col y dentro del rango
-            #if paired_row > rowTraveled:
             if paired_row < row and paired_row > rowTraveled:
                 rowResult +=1
                 # Multiplicación de columnas y almacenamiento en la nueva tabla

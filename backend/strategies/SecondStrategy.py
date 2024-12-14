@@ -101,17 +101,26 @@ class SecondStrategy:
         # Se considera solo el primer carácter de la secuencia para ordenar
         return (secuencia[1], secuencia[0])
 
+    def flatten_array(self, arr):
+        # Resultado que almacenará el arreglo aplanado
+        result = []
+        
+        # Recorremos cada elemento del arreglo original
+        for item in arr:
+            if isinstance(item, list):  # Si el elemento es un sub-arreglo
+                result.extend(self.flatten_array(item))  # Llamamos recursivamente para aplanarlo
+            else:
+                result.append(item)  # Si no es un sub-arreglo, lo agregamos tal cual
+        
+        return result
+
     def validateElementCandidate(self, arrToValidate):
+
+        arrToValidate = self.flatten_array(arrToValidate)
     
         # Ordenar con la función personalizada
         secuencias_ordenadas = sorted(arrToValidate, key=self.comparar, reverse=True)
         
-        # Obtener las letras finales de cada secuencia
-        letras_finales = [secuencia[1] for secuencia in secuencias_ordenadas]
-
-        # Contar cuántas veces aparece cada letra final
-        contador = Counter(letras_finales)
-
         # Usamos defaultdict para crear un diccionario donde los valores son listas
         groupedSubSeq = defaultdict(list)
 
@@ -231,7 +240,7 @@ class SecondStrategy:
             # Validación de Variables ya Marginalizadas
             marginalizedVars = ""
 
-            st.info(f"Inicio de Proceso para {Copsel}")
+            st.info(f"Inicio de Proceso para {Copsel} - {myCopsel}")
 
             for iSubSeq in range(len(myCopsel)):
 
