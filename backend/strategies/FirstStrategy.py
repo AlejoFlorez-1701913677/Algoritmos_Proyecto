@@ -2,6 +2,7 @@
 import numpy as np
 import streamlit as st
 
+
 from scipy.stats import wasserstein_distance
 
 from backend.auxiliares import (
@@ -11,10 +12,12 @@ from backend.auxiliares import (
 )
 
 from backend.marginalizacion import obtener_tabla_probabilidades
+from backend.candidateSystemGenerator.Marginalization import Marginalization
+
 
 class FirstStrategy:
 
-    def __init__(self, probabilities, cs_value, states, cs, ns):
+    def __init__(self, probabilities, cs_value, states, cs, ns, st2_candidateSystem, varData):
         self.probabilities = probabilities
         self.cs_value = cs_value
         self.memory = {}
@@ -23,9 +26,19 @@ class FirstStrategy:
         self.mejor_particion = []
         self.cs = cs
         self.ns = ns
+        self.marginalization = Marginalization(probabilities,st2_candidateSystem, varData)
 
         st.write("Sistema Original")
         st.latex(rf"""\bullet \left(\frac{{{self.ns}ᵗ⁺¹}}{{{self.cs}ᵗ}}\right)""")
+
+        candidateSystem_Imperfect = self.marginalization.indexCandidateSystem()
+        candidateSystem_Perfect = self.marginalization.marginalize_variableFuture(candidateSystem_Imperfect)
+            
+        st.subheader("Tabla de Sistema Candidato - Imperfecta")
+        st.table(candidateSystem_Imperfect)
+
+        st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
+        st.table(candidateSystem_Perfect)
 
         self.original_system = obtener_tabla_probabilidades(
             repr_current_to_array(self.cs, self.cs_value),
@@ -189,7 +202,7 @@ class FirstStrategy:
                 emd_distance = wasserstein_distance(self.original_system,partitioned_system)
                 st.latex(rf"""\bullet EMD : {emd_distance}""")
                                 
-                if (emd_distance > 0.0) and (emd_distance < self.min_emd):
+                if (emd_distance >= 0.0) and (emd_distance < self.min_emd):
                     self.min_emd = emd_distance
                     self.mejor_particion = [Copsel,Copia,emd_distance]
             

@@ -41,10 +41,10 @@ class SecondStrategy:
         st2_candidateSystem_Perfect = self.marginalization.marginalize_variableFuture(st2_candidateSystem_Imperfect)
 
         st.subheader("Tabla de Sistema Candidato - Imperfecta")
-        #st.table(st2_candidateSystem_Imperfect)
+        st.table(st2_candidateSystem_Imperfect)
 
         st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
-        #st.table(st2_candidateSystem_Perfect)
+        st.table(st2_candidateSystem_Perfect)
 
         st.text((int(self.cs_value, 2)))
         self.original_system = st2_candidateSystem_Perfect[(int(self.cs_value, 2))]
@@ -286,7 +286,7 @@ class SecondStrategy:
 
             st.warning(f"El calculo de EMD es {emd_distance}")
                                     
-            if (emd_distance > 0.0) and (emd_distance < self.min_emd):
+            if (emd_distance >= 0.0) and (emd_distance < self.min_emd):
                 self.min_emd = emd_distance
                 self.mejor_particion = [Copsel,Copia,emd_distance]
                 
@@ -324,7 +324,7 @@ class SecondStrategy:
             Arreglo = self.Cortar(Final)
                     
             for x in Todos[3:] :
-                st.subheader("--Alejo--",divider="blue")
+                st.subheader("Estrategia 2 - Parte 2",divider="blue")
                 self.min_emd = float("inf")
                 Arreglo = self.generar_combinaciones(Arreglo[len(Arreglo)-1],Arreglo[:-1],True)
                 Arreglo = self.Cortar(Arreglo)

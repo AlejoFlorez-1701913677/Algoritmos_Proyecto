@@ -130,23 +130,6 @@ if data is not None:
         st.write("Llené los siguientes datos, teniendo en cuenta que solo se puede marginalizar variables que se encuentren continuas")
         candidateSystem = st.text_input("Sistema candidato", "ABC")
 
-        execCandidateSystem = st.button("Obtener sistema candidato")
-
-        if execCandidateSystem:
-
-            '''
-            candidateSystem_Imperfect = indexCandidateSystem(result_matrix,candidateSystem, varData)
-            candidateSystem_Perfect = marginalize_variableFuture(candidateSystem_Imperfect,candidateSystem, varData)
-            
-            st.subheader("Tabla de Sistema Candidato - Imperfecta")
-            st.table(candidateSystem_Imperfect)
-
-            st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
-            st.table(candidateSystem_Perfect)
-            '''
-
-            st.divider()
-
         st.subheader("Subsistema")
         
         st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
@@ -160,7 +143,7 @@ if data is not None:
 
             st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
 
-            firstStrategy = FirstStrategy(result_matrix, dataJson["stateSought"], states, sysC_currentStatus, sysC_nextStatus)
+            firstStrategy = FirstStrategy(result_matrix, dataJson["stateSought"], states, sysC_currentStatus, sysC_nextStatus, candidateSystem, varData)
             mejor_particion, min_emd = firstStrategy.strategy()
 
     with st.expander("Segunda Estrategia"):
