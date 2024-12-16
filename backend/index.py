@@ -170,6 +170,48 @@ if data is not None:
             secondtStrategy = SecondStrategy(result_matrix, dataJson["stateSought"], states, st2_sysC_currentStatus, st2_sysC_nextStatus, dataJson, st2_candidateSystem, varData)
             mejor_particion, min_emd = secondtStrategy.strategy()
 
+    # with st.expander("Tercera Estrategia"):
+
+    #     st3_candidateSystem_Perfect = []
+
+    #     st.divider()
+
+    #     st.title("¿Desea Crear un sistema Candidato?")
+
+    #     st.write("Llené los siguientes datos, teniendo en cuenta que solo se puede marginalizar variables que se encuentren continuas")
+    #     st3_candidateSystem = st.text_input("Sistema candidato - Estrategia 3", "ABC")
+
+    #     # st3_execCandidateSystem = st.button("Obtener sistema candidato - Estrategia 3")
+
+    #     # if st3_execCandidateSystem:
+
+    #     #     st3_candidateSystem_Imperfect = indexCandidateSystem(result_matrix,st3_candidateSystem, varData)
+    #     #     st3_candidateSystem_Perfect = marginalize_variableFuture(st3_candidateSystem_Imperfect,st3_candidateSystem, varData)
+            
+    #     #     st.subheader("Tabla de Sistema Candidato - Imperfecta")
+    #     #     st.table(st3_candidateSystem_Imperfect)
+
+    #     #     st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
+    #     #     st.table(st3_candidateSystem_Perfect)
+
+    #     #     st.divider()
+
+    #     st.subheader("Subsistema")
+        
+    #     st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
+
+    #     st3_sysC_currentStatus = st.text_input("Estado Presente - Estrategia 3", "")
+    #     st3_sysC_nextStatus = st.text_input("Estado Futuro - Estrategia 3", "")
+
+    #     st3_execPairContruction = st.button("Obtener Pares - Estrategia 3")
+
+    #     if st3_execPairContruction:
+
+    #         st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
+
+    #         thirdStrategy = ThirdStrategy(result_matrix, dataJson["stateSought"], states, sysC_currentStatus, sysC_nextStatus)
+    #         mejor_particion, min_emd = thirdStrategy.strategy()
+
     with st.expander("Tercera Estrategia"):
 
         st3_candidateSystem_Perfect = []
@@ -180,21 +222,6 @@ if data is not None:
 
         st.write("Llené los siguientes datos, teniendo en cuenta que solo se puede marginalizar variables que se encuentren continuas")
         st3_candidateSystem = st.text_input("Sistema candidato - Estrategia 3", "ABC")
-
-        st3_execCandidateSystem = st.button("Obtener sistema candidato - Estrategia 3")
-
-        if st3_execCandidateSystem:
-
-            st3_candidateSystem_Imperfect = indexCandidateSystem(result_matrix,st3_candidateSystem, varData)
-            st3_candidateSystem_Perfect = marginalize_variableFuture(st3_candidateSystem_Imperfect,st3_candidateSystem, varData)
-            
-            st.subheader("Tabla de Sistema Candidato - Imperfecta")
-            st.table(st3_candidateSystem_Imperfect)
-
-            st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
-            st.table(st3_candidateSystem_Perfect)
-
-            st.divider()
 
         st.subheader("Subsistema")
         
@@ -207,9 +234,31 @@ if data is not None:
 
         if st3_execPairContruction:
 
-            st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
+            st.caption("Iniciando optimización con ACO para la Tercera Estrategia...")
 
-            thirdStrategy = ThirdStrategy(result_matrix, dataJson["stateSought"], states, sysC_currentStatus, sysC_nextStatus)
-            mejor_particion, min_emd = thirdStrategy.strategy()
+            # Instanciar y ejecutar Tercera Estrategia
+            try:
+                
+                #thirdStrategy = ThirdStrategy(result_matrix, dataJson["stateSought"], states, st3_sysC_currentStatus, st3_sysC_nextStatus,candidate_system_input, variable_data)
+                third_strategy = ThirdStrategy(
+                    probabilities=result_matrix,           # Matriz de probabilidades generada
+                    cs_value=dataJson["stateSought"],      # Estado buscado
+                    states=states,                         # Lista de estados
+                    ns=list(st3_sysC_nextStatus),          # Estado futuro (como lista de caracteres)
+                    cs=list(st3_sysC_currentStatus),       # Estado presente (como lista de caracteres)
+                    candidate_system=st3_candidateSystem,  # Sistema candidato ingresado
+                    var_data=varData                       # Datos auxiliares
+                )
 
-    
+                resultados = third_strategy.strategy()
+
+                if resultados is None:
+                    st.error("No se obtuvieron resultados de la optimización con ACO.")
+                else:
+                    mejor_particion, min_emd = resultados
+                    st.success("Resultados obtenidos:")
+                    st.text(f"Mejor Partición: {mejor_particion}")
+                    st.text(f"EMD Mínimo: {min_emd}")
+
+            except Exception as e:
+                st.error(f"Ocurrió un error al ejecutar la Tercera Estrategia: {str(e)}")

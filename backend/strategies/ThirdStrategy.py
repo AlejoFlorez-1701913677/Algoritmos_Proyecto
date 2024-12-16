@@ -1,236 +1,258 @@
+# import numpy as np
+# from scipy.stats import wasserstein_distance
+# from backend.marginalizacion import obtener_tabla_probabilidades
+# from backend.auxiliares import repr_current_to_array, repr_next_to_array
+# import random
 
+# class ThirdStrategy:
+#     def __init__(self, probabilities, cs_value, states, ns, cs, candidate_system, var_data):
+#         self.probabilities = probabilities
+#         self.cs_value = cs_value
+#         self.states = states
+#         self.ns = ns
+#         self.cs = cs
+#         self.candidate_system = candidate_system
+#         self.var_data = var_data
+#         self.original_system = self._get_original_system()
+
+#     def _get_original_system(self):
+#         """
+#         Obtiene la tabla de probabilidades del sistema original y la convierte a un array de NumPy.
+#         """
+#         original_table = obtener_tabla_probabilidades(
+#             repr_current_to_array(self.cs, self.cs_value),
+#             repr_next_to_array(self.ns),
+#             self.probabilities,
+#             self.states,
+#         )
+#         return np.array(original_table).flatten()
+
+#     def _pad_to_same_shape(self, array1, array2):
+#         """
+#         Asegura que dos arrays tengan la misma forma, rellenando con ceros si es necesario.
+#         """
+#         max_length = max(array1.shape[0], array2.shape[0])
+#         padded_array1 = np.pad(array1, (0, max_length - array1.shape[0]), 'constant')
+#         padded_array2 = np.pad(array2, (0, max_length - array2.shape[0]), 'constant')
+#         return padded_array1, padded_array2
+
+#     def evaluate_path(self, path):
+#         """
+#         Evalúa un camino combinando tablas de probabilidades y las convierte a arrays de NumPy.
+#         """
+#         partitioned_system = np.zeros_like(self.original_system)
+
+#         for (ns_comb, cs_comb) in path:
+#             tabla = obtener_tabla_probabilidades(
+#                 repr_current_to_array(cs_comb, self.cs_value),
+#                 repr_next_to_array(ns_comb),
+#                 self.probabilities,
+#                 self.states,
+#             )
+#             tabla_np = np.array(tabla).flatten()
+
+#             # Asegurar que las dimensiones coincidan
+#             partitioned_system, tabla_np = self._pad_to_same_shape(partitioned_system, tabla_np)
+#             partitioned_system += tabla_np
+
+#         return partitioned_system
+
+#     def calculate_emd(self, partitioned_system):
+#         """
+#         Calcula la distancia EMD entre el sistema original y el particionado.
+#         """
+#         # Asegurar que original_system y partitioned_system tienen la misma forma
+#         original, partitioned = self._pad_to_same_shape(self.original_system, partitioned_system)
+#         return wasserstein_distance(original, partitioned)
+
+#     def run_aco(self, num_ants=20, iterations=50, evaporation=0.5):
+#         """
+#         Ejecuta la optimización ACO.
+#         """
+#         pheromones = {state: 1.0 for state in self.ns + self.cs}
+#         best_emd = float("inf")
+#         best_solution = None
+
+#         for iteration in range(iterations):
+#             solutions = []
+#             for _ in range(num_ants):
+#                 # Generar un camino (combinaciones de ns y cs)
+#                 path = []
+#                 for _ in range(len(self.ns)):
+#                     ns_state = random.choices(self.ns, weights=[pheromones[s] for s in self.ns])[0]
+#                     cs_state = random.choices(self.cs, weights=[pheromones[s] for s in self.cs])[0]
+#                     path.append((ns_state, cs_state))
+
+#                 # Evaluar el camino
+#                 partitioned_system = self.evaluate_path(path)
+#                 emd = self.calculate_emd(partitioned_system)
+#                 solutions.append((path, emd))
+
+#                 # Actualizar mejor solución
+#                 if emd < best_emd:
+#                     best_emd = emd
+#                     best_solution = path
+
+#             # Actualizar feromonas
+#             for (path, emd) in solutions:
+#                 for (ns_state, cs_state) in path:
+#                     pheromones[ns_state] += 1.0 / (1 + emd)
+#                     pheromones[cs_state] += 1.0 / (1 + emd)
+
+#             # Evaporación
+#             for state in pheromones:
+#                 pheromones[state] *= evaporation
+
+#         return best_solution, best_emd
+
+#     def strategy(self):
+#         """
+#         Ejecuta la estrategia y muestra resultados.
+#         """
+#         print("Ejecutando optimización con ACO...")
+#         solution, emd = self.run_aco()
+
+#         print("Optimización completada.")
+#         print(f"Mejor Partición: {solution}")
+#         print(f"EMD Mínimo: {emd}")
+
+#         return solution, emd
 import numpy as np
 import streamlit as st
-
 from scipy.stats import wasserstein_distance
-
-from backend.auxiliares import (
-    ordenar_matriz_product,
-    repr_current_to_array,
-    repr_next_to_array,
-)
-
 from backend.marginalizacion import obtener_tabla_probabilidades
+from backend.auxiliares import repr_current_to_array, repr_next_to_array
+import random
 
 class ThirdStrategy:
-    
-    def __init__(self, probabilities, cs_value, states, cs, ns):
+    def __init__(self, probabilities, cs_value, states, ns, cs, candidate_system, var_data):
         self.probabilities = probabilities
         self.cs_value = cs_value
-        self.memory = {}
         self.states = states
-        self.min_emd = float("inf")
-        self.mejor_particion = []
-        self.cs = cs
         self.ns = ns
+        self.cs = cs
+        self.candidate_system = candidate_system
+        self.var_data = var_data
+        self.original_system = self._get_original_system()
+        self.iteration_count = 0
 
-        st.write("Sistema Original - Estrategia 3")
-        st.latex(rf"""\bullet \left(\frac{{{self.ns}ᵗ⁺¹}}{{{self.cs}ᵗ}}\right)""")
-
-        self.original_system = obtener_tabla_probabilidades(
+    def _get_original_system(self):
+        """
+        Obtiene la tabla de probabilidades del sistema original y la convierte a un array de NumPy.
+        """
+        original_table = obtener_tabla_probabilidades(
             repr_current_to_array(self.cs, self.cs_value),
             repr_next_to_array(self.ns),
             self.probabilities,
             self.states,
         )
+        return np.array(original_table).flatten()
 
-        st.write("Validación Estado Original")
-        st.text(self.original_system)
+    def _pad_to_same_shape(self, array1, array2):
+        """
+        Asegura que dos arrays tengan la misma forma, rellenando con ceros si es necesario.
+        """
+        max_length = max(array1.shape[0], array2.shape[0])
+        padded_array1 = np.pad(array1, (0, max_length - array1.shape[0]), 'constant')
+        padded_array2 = np.pad(array2, (0, max_length - array2.shape[0]), 'constant')
+        return padded_array1, padded_array2
 
-    def Cortar(self, Lista):
-        Corte = Lista[-2:]
-        Corte_unido = []
-        for elem in Corte:
-            if isinstance(elem, list):
-                Corte_unido.extend(elem)
-            else:
-                Corte_unido.append(elem)
+    def evaluate_path(self, path):
+        """
+        Evalúa un camino combinando tablas de probabilidades y las convierte a arrays de NumPy.
+        """
+        partitioned_system = np.zeros_like(self.original_system)
 
-        Arreglo = Lista[:-2]
-        Arreglo.append(Corte_unido)
-        return Arreglo
-    
-    def descomponer(self, ns, cs):
-        if self.memory.get(cs) is not None and self.memory.get(cs).get(ns) is not None:
-            if any(self.memory.get(cs).get(ns)):
-                return self.memory.get(cs).get(ns)
-
-        if len(ns) == 1:
-            value = obtener_tabla_probabilidades(
-                repr_current_to_array(cs, self.cs_value),
-                repr_next_to_array(ns),
+        for (ns_comb, cs_comb) in path:
+            tabla = obtener_tabla_probabilidades(
+                repr_current_to_array(cs_comb, self.cs_value),
+                repr_next_to_array(ns_comb),
                 self.probabilities,
                 self.states,
             )
-            return value
+            tabla_np = np.array(tabla).flatten()
 
-        value = []
-        for i in range(0, len(ns)):
-            if len(value) > 0:
-                cross_product = np.kron(value, self.descomponer(ns[i], cs))
-                value = ordenar_matriz_product(cross_product)
-            else:
-                value = np.array(self.descomponer(ns[i], cs))
+            # Asegurar que las dimensiones coincidan
+            partitioned_system, tabla_np = self._pad_to_same_shape(partitioned_system, tabla_np)
+            partitioned_system += tabla_np
 
-                if self.memory.get(cs) == None:
-                    self.memory[cs] = {}
+        return partitioned_system
 
-                self.memory[cs][ns[i]] = value
-
-        return value
-
-    def formatStrategie(self, selected, remaining):
-
-        ns2Result = []
-        ns1Result = []
-        cs1Result = []
-        cs2Result = []
-
-        for item in selected:
-
-            #st.text(f"item -> {item}")
-            if isinstance(item, list):
-                # Si el item es una lista, procesamos cada elemento dentro de la lista
-                for subitem in item:
-                    if 'N' in subitem:  # Verificamos si el subelemento contiene 'N'
-                        ns1Result.append(subitem.replace('N', ''))  # Elimina 'N' y agrega a ns1Result
-                    else:
-                        cs1Result.append(subitem)  # Si no tiene 'N', lo agregamos a cs1Result
-            elif isinstance(item, str):
-                # Si el item es una cadena, verificamos si contiene 'N'
-                if 'N' in item:
-                    ns1Result.append(item.replace('N', ''))  # Elimina 'N' y agrega a ns1Result
-                else:
-                    cs1Result.append(item)  # Si no tiene 'N', lo agregamos a cs1Result
-            else:
-                # Si el item no es ni lista ni cadena, lo dejamos tal cual
-                cs1Result.append(item)
-
-        cs1_flattened = [str(item) for sublist in cs1Result for item in (sublist if isinstance(sublist, list) else [sublist])]
-        ns1_flattened = [str(item) for sublist in ns1Result for item in (sublist if isinstance(sublist, list) else [sublist])]
+    def format_latex_solution(self, path, emd):
+        """
+        Formatea una solución como un conjunto LaTeX con conjuntos anidados.
+        """
+        st.markdown(f"### Mejor Solución de Iteración {self.iteration_count}:")
+        latex_parts = []
+        for (ns, cs) in path:
+            latex_parts.append(rf"\left( \frac{{{ns}}}{{{cs}}} \right)")
         
+        # Combinar todas las fracciones con multiplicación entre ellas
+        latex_result = " \\times ".join(latex_parts)
+        st.latex(rf"""{latex_result}""")
+        st.markdown(f"**EMD:** {emd}")
 
-        for item in remaining:
-            if isinstance(item, list):
-                # Si el item es una lista, procesamos cada elemento dentro de la lista
-                for subitem in item:
-                    if 'N' in subitem:  # Verificamos si el subelemento contiene 'N'
-                        ns2Result.append(subitem.replace('N', ''))  # Elimina 'N' y agrega a ns1Result
-                    else:
-                        cs2Result.append(subitem)  # Si no tiene 'N', lo agregamos a cs1Result
-            elif isinstance(item, str):
-                # Si el item es una cadena, verificamos si contiene 'N'
-                if 'N' in item:
-                    ns2Result.append(item.replace('N', ''))  # Elimina 'N' y agrega a ns1Result
-                else:
-                    cs2Result.append(item)  # Si no tiene 'N', lo agregamos a cs1Result
-            else:
-                # Si el item no es ni lista ni cadena, lo dejamos tal cual
-                cs2Result.append(item)
+    def run_aco(self, num_ants=20, iterations=5, evaporation=0.5):
+        """
+        Ejecuta la optimización ACO.
+        """
+        pheromones = {state: 1.0 for state in self.ns + self.cs}
+        best_emd = float("inf")
+        best_solution = None
 
-        cs2_flattened = [str(item) for sublist in cs2Result for item in (sublist if isinstance(sublist, list) else [sublist])]
-        ns2_flattened = [str(item) for sublist in ns2Result for item in (sublist if isinstance(sublist, list) else [sublist])]
+        for iteration in range(1, iterations + 1):
+            self.iteration_count = iteration
+            solutions = []
+            for _ in range(num_ants):
+                # Generar un camino (combinaciones de ns y cs)
+                path = []
+                for _ in range(len(self.ns)):
+                    ns_state = random.choices(self.ns, weights=[pheromones[s] for s in self.ns])[0]
+                    cs_state = random.choices(self.cs, weights=[pheromones[s] for s in self.cs])[0]
+                    path.append((ns_state, cs_state))
 
+                # Evaluar el camino
+                partitioned_system = self.evaluate_path(path)
+                emd = self.calculate_emd(partitioned_system)
+                solutions.append((path, emd))
 
-        st.latex(rf"""\bullet \left(\frac{{{''.join(ns1_flattened)}}}{{{''.join(cs1_flattened)}}}\right) * \left(\frac{{{''.join(ns2_flattened)}}}{{{''.join(cs2_flattened)}}}\right)""")
-        return ''.join(ns1_flattened),''.join(cs1_flattened),''.join(ns2_flattened),''.join(cs2_flattened)
+                # Actualizar mejor solución
+                if emd < best_emd:
+                    best_emd = emd
+                    best_solution = path
 
-    def generar_combinaciones(self, seleccionados, restantes, Primero):
+            # Mostrar mejores resultados en LaTeX
+            if best_solution:
+                self.format_latex_solution(best_solution, best_emd)
 
-        st.divider()
-        st.subheader("Sistema a combinar:",divider="gray")
-        
-        self.formatStrategie(seleccionados,restantes)
+            # Actualizar feromonas
+            for (path, emd) in solutions:
+                for (ns_state, cs_state) in path:
+                    pheromones[ns_state] += 1.0 / (1 + emd)
+                    pheromones[cs_state] += 1.0 / (1 + emd)
 
-        st.divider()
+            # Evaporación
+            for state in pheromones:
+                pheromones[state] *= evaporation
 
-        Opciones = []
-        Combinacion =[False,1]
+        return best_solution, best_emd
 
-        if isinstance(seleccionados,list) and len(seleccionados)>1 and Primero:
-            Combinacion[0]=True
-            Combinacion[1]=len(seleccionados)
+    def calculate_emd(self, partitioned_system):
+        """
+        Calcula la distancia EMD entre el sistema original y el particionado.
+        """
+        original, partitioned = self._pad_to_same_shape(self.original_system, partitioned_system)
+        return wasserstein_distance(original, partitioned)
 
-        if not restantes:
-            return seleccionados
-        
-        for i in range(len(restantes)):
-            seleccionados.append(restantes[i])
-            Copsel=seleccionados[:]
-            Copia = restantes[:]
-            Copia.remove(restantes[i])
-
-            ns1,cs1,ns2,cs2 = self.formatStrategie(Copsel,Copia)
-
-            arr1 = np.array(self.descomponer(ns2, cs2))
-            arr2 = np.array(self.descomponer(ns1, cs1))
-
-            partitioned_system = []
-            
-            if len(arr1) > 0:
-                partitioned_system = arr1
-
-            if len(arr2) > 0:
-                partitioned_system = arr2
-
-            if len(arr1) > 0 and len(arr2) > 0:
-                cross_product = np.kron(arr1, arr2)
-                partitioned_system = ordenar_matriz_product(cross_product)
-
-            if len(partitioned_system) > 0:
-                
-                # Convertir partitioned_system a array de NumPy si no lo es
-                partitioned_system = np.array(partitioned_system)
-
-                # Calcular la Distancia de Wasserstein (EMD)
-                emd_distance = wasserstein_distance(self.original_system,partitioned_system)
-                st.latex(rf"""\bullet EMD : {emd_distance}""")
-                                
-                if (emd_distance > 0.0) and (emd_distance < self.min_emd):
-                    self.min_emd = emd_distance
-                    self.mejor_particion = [Copsel,Copia,emd_distance]
-            
-            Opciones.append([Copsel,Copia,emd_distance])
-            seleccionados.remove(restantes[i])
-
-        st.subheader("Combinación Elegida",divider="gray")
-        self.formatStrategie(self.mejor_particion[0],self.mejor_particion[1])
-        
-        seleccion = min(Opciones, key=lambda x: x[2])
-        Final= self.generar_combinaciones(seleccion[0], seleccion[1], False)
-
-        if(Combinacion[0]):
-            Final=[Final[:Combinacion[1]]]+Final[Combinacion[1]:]
-            #st.latex(f"{Final}")
-        return Final
-    
     def strategy(self):
-        
-        st.header("Combinaciones Encontradas")
+        """
+        Ejecuta la estrategia y muestra resultados.
+        """
+        st.header("Ejecución de Optimización con ACO")
+        solution, emd = self.run_aco()
 
-        Todos = []
-                
-        for x in range(len(self.ns)):
-            Todos.append(self.ns[x]+'N')
-                
-        for x in range(len(self.cs)):
-            Todos.append(self.cs[x])
-
-        while len(Todos) > 2:
-
-            Final = self.generar_combinaciones([Todos[0]], Todos[1:], True)
-            st.latex(f'{Final}')
-            Arreglo = self.Cortar(Final)
-                    
-            for x in Todos[3:] :
-                Arreglo = self.generar_combinaciones(Arreglo[len(Arreglo)-1],Arreglo[:-1],True)
-                Arreglo = self.Cortar(Arreglo)
-                self.formatStrategie(Arreglo[0],Arreglo[1])
-                st.latex(f'{Arreglo}')
-                st.latex(rf"""\bullet EMD : {self.min_emd}""")
-                st.latex(rf"""\bullet Mejor Combinación : {self.mejor_particion}""")
-
-            Todos = Arreglo
-
-        return self.mejor_particion, round(self.min_emd, 5)
-    
+        st.success("Optimización completada.")
+        st.subheader("Mejor Resultado Global:")
+        if solution:
+            self.format_latex_solution(solution, emd)
+        return solution, emd
