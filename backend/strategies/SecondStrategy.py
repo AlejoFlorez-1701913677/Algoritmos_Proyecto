@@ -326,6 +326,8 @@ class SecondStrategy:
         
         st.header("Combinaciones Encontradas")
 
+        Grafo = Graph()
+
         self.cs = ''.join(sorted(self.cs, reverse=True))
         self.ns = ''.join(sorted(self.ns, reverse=True))
 
@@ -359,7 +361,7 @@ class SecondStrategy:
                 st.latex(f'{Arreglo}')
                 st.latex(rf"""\bullet EMD : {self.min_emd}""")
                 st.latex(rf"""\bullet Mejor Combinación : {self.mejor_particion}""")
-                Grafo = Graph()
+                
                 for arista in Todos:
                     Grafo.add_node(arista[0])
                     Grafo.add_node(arista[1])
