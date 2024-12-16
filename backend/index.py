@@ -85,21 +85,6 @@ if data is not None:
         st.write("Llené los siguientes datos, teniendo en cuenta que solo se puede marginalizar variables que se encuentren continuas")
         sysFB_candidateSystem = st.text_input("Sistema candidato - Fuerza Bruta", "ABC")
 
-        sysFB_execCandidateSystem = st.button("Obtener sistema candidato - Fuerza Bruta")
-
-        if sysFB_execCandidateSystem:
-
-            candidateSystem_Imperfect = indexCandidateSystem(result_matrix,sysFB_candidateSystem, varData)
-            fB_candidateSystem_Perfect = marginalize_variableFuture(candidateSystem_Imperfect,sysFB_candidateSystem, varData)
-            
-            st.subheader("Tabla de Sistema Candidato - Imperfecta  - Fuerza Bruta")
-            st.table(candidateSystem_Imperfect)
-
-            st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada) - Fuerza Bruta")
-            st.table(fB_candidateSystem_Perfect)
-
-            st.divider()
-
         st.subheader("Subsistema")
         
         st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
@@ -113,7 +98,7 @@ if data is not None:
 
             st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
 
-            bruteForce = BruteForce(result_matrix, dataJson["stateSought"], states, sysFB_currentStatus, sysFB_nextStatus)
+            bruteForce = BruteForce(result_matrix, dataJson["stateSought"], states, sysFB_currentStatus, sysFB_nextStatus, dataJson, sysFB_candidateSystem, varData)
             FB_mejor_particion, FB_min_emd = bruteForce.strategy(sysFB_nextStatus, sysFB_currentStatus)
 
             st.subheader(f"Mejor Partición encontrada {FB_mejor_particion}")
