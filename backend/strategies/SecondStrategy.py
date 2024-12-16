@@ -8,6 +8,8 @@ from scipy.stats import wasserstein_distance
 
 from collections import Counter, defaultdict
 
+from Bipartido.Bipartido import Graph
+
 from backend.candidateSystemGenerator.Marginalization import Marginalization
 
 from backend.auxiliares import (
@@ -202,7 +204,7 @@ class SecondStrategy:
         #st.table(self.opeEMD(rowsSystCandSelectedOpe2))
         return self.opeEMD(rowsSystCandSelectedOpe2)
 
-    def generar_combinaciones(self, seleccionados, restantes, Primero):
+    def generar_combinaciones(self, seleccionados, restantes, Primero,Todos):
 
         st.divider()
 
@@ -294,13 +296,26 @@ class SecondStrategy:
             st.divider()
             st.divider()
 
+            Grafo = Graph()
+            for arista in Todos:
+                Grafo.add_node(arista[0])
+                Grafo.add_node(arista[1])
+                Grafo.add_edge(arista[0],arista[1])
+                
+            for arista in Copsel:
+                Grafo.remove_edge(arista[0],arista[1])
+
+            if Grafo.has_bipartition():
+                st.latex(rf"""\bullet No Tiene Biparticion""")
+            else:
+                st.latex(rf"""\bullet Tiene Biparticion""")
             Opciones.append([Copsel,Copia,emd_distance])
             seleccionados.remove(restantes[i])
 
         st.subheader("Combinación Elegida",divider="gray")
         #st.text(f"{self.mejor_particion[0],self.mejor_particion[1]}")
         seleccion = min(Opciones, key=lambda x: x[2])
-        Final= self.generar_combinaciones(seleccion[0], seleccion[1], False)
+        Final= self.generar_combinaciones(seleccion[0], seleccion[1], False,Todos)
 
         if(Combinacion[0]):
             Final=[Final[:Combinacion[1]]]+Final[Combinacion[1]:]
@@ -320,17 +335,44 @@ class SecondStrategy:
 
         while len(Todos) > 2:
 
-            Final = self.generar_combinaciones([Todos[0]], Todos[1:], True)
+            Final = self.generar_combinaciones([Todos[0]], Todos[1:], True,Todos)
             Arreglo = self.Cortar(Final)
+
+            for arista in Todos:
+                    Grafo.add_node(arista[0])
+                    Grafo.add_node(arista[1])
+                    Grafo.add_edge(arista[0],arista[1])
+                
+            for arista in self.mejor_particion[0]:
+                    Grafo.remove_edge(arista[0],arista[1])
+
+            if Grafo.has_bipartition():
+                st.latex(rf"""\bullet No Tiene Biparticion""")
+            else:
+                st.latex(rf"""\bullet Tiene Biparticion""")
                     
             for x in Todos[3:] :
                 st.subheader("Estrategia 2 - Parte 2",divider="blue")
                 self.min_emd = float("inf")
-                Arreglo = self.generar_combinaciones(Arreglo[len(Arreglo)-1],Arreglo[:-1],True)
+                Arreglo = self.generar_combinaciones(Arreglo[len(Arreglo)-1],Arreglo[:-1],True,Todos)
                 Arreglo = self.Cortar(Arreglo)
                 st.latex(f'{Arreglo}')
                 st.latex(rf"""\bullet EMD : {self.min_emd}""")
                 st.latex(rf"""\bullet Mejor Combinación : {self.mejor_particion}""")
+                Grafo = Graph()
+                for arista in Todos:
+                    Grafo.add_node(arista[0])
+                    Grafo.add_node(arista[1])
+                    Grafo.add_edge(arista[0],arista[1])
+                
+                for arista in self.mejor_particion[0]:
+                    Grafo.remove_edge(arista[0],arista[1])
+
+                if Grafo.has_bipartition():
+                    st.latex(rf"""\bullet No Tiene Biparticion""")
+                else:
+                    st.latex(rf"""\bullet Tiene Biparticion""")
+            
 
             Todos = Arreglo
 
