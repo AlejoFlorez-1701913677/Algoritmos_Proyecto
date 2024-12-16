@@ -1,6 +1,7 @@
 import numpy as np
 import streamlit as st
 
+from candidateSystemGenerator.Marginalization import Marginalization
 from scipy.stats import wasserstein_distance
 
 from backend.auxiliares import (
@@ -13,7 +14,7 @@ from backend.marginalizacion import obtener_tabla_probabilidades
 
 class BruteForce:
 
-    def __init__(self, probabilities, cs_value, states, cs, ns):
+    def __init__(self, probabilities, cs_value, states, cs, ns, futureTables, sysFB_candidateSystem, varData):
         self.probabilities = probabilities
         self.cs_value = cs_value
         self.memory = {}
@@ -21,6 +22,18 @@ class BruteForce:
         self.min_emd = float("inf")
         self.mejor_particion = []
         self.impresos = set()
+        self.marginalization = Marginalization(probabilities,sysFB_candidateSystem, varData)
+    
+
+        candidateSystem_Imperfect = self.marginalization.indexCandidateSystem()
+        fB_candidateSystem_Perfect = self.marginalization.marginalize_variableFuture(candidateSystem_Imperfect)
+
+        st.subheader("Tabla de Sistema Candidato - Imperfecta")
+        st.table(candidateSystem_Imperfect)
+
+        st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
+        st.table(fB_candidateSystem_Perfect)
+
 
         self.original_system = obtener_tabla_probabilidades(
             repr_current_to_array(cs, cs_value),
