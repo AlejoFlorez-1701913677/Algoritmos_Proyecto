@@ -1,8 +1,10 @@
+import time
 import numpy as np
 import streamlit as st
 
-from candidateSystemGenerator.Marginalization import Marginalization
+from datetime import datetime
 from scipy.stats import wasserstein_distance
+from candidateSystemGenerator.Marginalization import Marginalization
 
 from backend.auxiliares import (
     ordenar_matriz_product,
@@ -87,6 +89,16 @@ class BruteForce:
     
     def strategy(self,ns, cs):
 
+        start_time = time.time()
+
+        # Convertir a un objeto datetime
+        dt_object = datetime.fromtimestamp(start_time)
+
+        # Formatear como cadena de fecha y hora
+        formatted_time = dt_object.strftime('%Y-%m-%d %H:%M:%S.%f')
+
+        st.subheader(f"Momento inicial {formatted_time}",divider="green")
+
         st.subheader("Estados Encontrados")
 
         for lenNs in range(len(ns) + 1):
@@ -139,5 +151,25 @@ class BruteForce:
 
                             self.impresos.add(combinacion_actual)
                             self.impresos.add(combinacion_inversa)
+
+        # Marca el tiempo de finalización
+        end_time = time.time()
+
+        # Convertir a un objeto datetime
+        dt_objectEnd = datetime.fromtimestamp(end_time)
+        # Formatear como cadena de fecha y hora
+        formatted_time_end = dt_objectEnd.strftime('%Y-%m-%d %H:%M:%S.%f')
+
+        st.subheader(f"Momento Final {formatted_time_end}",divider="green")
+
+        elapsed_time = end_time - start_time
+
+        # Convertir a un objeto datetime
+        dt_object_elapsed_time = datetime.fromtimestamp(elapsed_time)
+        # Formatear como cadena de fecha y hora
+        formatted_time_elapsed_time = dt_object_elapsed_time.strftime('%M:%S.%f')
+
+
+        st.subheader(f"Tiempo Total {formatted_time_elapsed_time}",divider="green")
 
         return mejor_particion, round(self.min_emd, 5)
