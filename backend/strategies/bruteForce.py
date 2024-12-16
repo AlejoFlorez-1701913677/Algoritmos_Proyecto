@@ -1,3 +1,4 @@
+import csv
 import time
 import numpy as np
 import streamlit as st
@@ -25,7 +26,7 @@ class BruteForce:
         self.mejor_particion = []
         self.impresos = set()
         self.marginalization = Marginalization(probabilities,sysFB_candidateSystem, varData)
-    
+        self.ValueCSV = []
 
         candidateSystem_Imperfect = self.marginalization.indexCandidateSystem()
         fB_candidateSystem_Perfect = self.marginalization.marginalize_variableFuture(candidateSystem_Imperfect)
@@ -86,7 +87,26 @@ class BruteForce:
                 self.memory[cs][ns[i]] = value
 
         return value
-    
+
+    def saveCSV(self):
+        # Abrir el archivo CSV en modo escritura
+        with open('archivo.csv', mode='w', newline='') as file:
+            writer = csv.writer(file)
+            
+            # Escribir el encabezado del CSV
+            writer.writerow(['combination', 'emd'])
+            
+            # Iterar sobre el arreglo de objetos y escribir cada fila
+            for obj in self.ValueCSV:
+                # Convertir las tuplas de combination a una cadena (puedes elegir el formato que más te convenga)
+                combination_str = '; '.join([f"({x[0]}, {x[1]})" for x in obj['combination']])
+                
+                # Convertir el valor de 'emd' a string
+                emd_str = str(obj['emd'])
+                
+                # Escribir la fila en el CSV
+                writer.writerow([combination_str, emd_str])
+
     def strategy(self,ns, cs):
 
         start_time = time.time()
@@ -144,10 +164,14 @@ class BruteForce:
                                 # No puede tener arreglo vacio
                                 emd_distance = wasserstein_distance(self.original_system,partitioned_system)
                                 st.latex(rf"""\bullet {emd_distance}""")
+
+                                self.ValueCSV.append({"combination":combinacion_actual, "emd":str(emd_distance)})
+                                self.ValueCSV.append({"combination":combinacion_inversa, "emd":str(emd_distance)})
                                 
                                 if emd_distance < self.min_emd and emd_distance > 0:
                                     self.min_emd = emd_distance
                                     mejor_particion = combinacion_actual
+                                    
 
                             self.impresos.add(combinacion_actual)
                             self.impresos.add(combinacion_inversa)
@@ -169,6 +193,7 @@ class BruteForce:
         # Formatear como cadena de fecha y hora
         formatted_time_elapsed_time = dt_object_elapsed_time.strftime('%M:%S.%f')
 
+        self.saveCSV()
 
         st.subheader(f"Tiempo Total {formatted_time_elapsed_time}",divider="green")
 
