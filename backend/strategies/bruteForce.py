@@ -1,6 +1,5 @@
 import csv
 import time
-import itertools
 import numpy as np
 import streamlit as st
 
@@ -29,14 +28,15 @@ class BruteForce:
         self.marginalization = Marginalization(probabilities,sysFB_candidateSystem, varData)
         self.ValueCSV = []
 
-        #candidateSystem_Imperfect = self.marginalization.indexCandidateSystem()
-        #fB_candidateSystem_Perfect = self.marginalization.marginalize_variableFuture(candidateSystem_Imperfect)
+        candidateSystem_Imperfect = self.marginalization.indexCandidateSystem()
+        fB_candidateSystem_Perfect = self.marginalization.marginalize_variableFuture(candidateSystem_Imperfect)
 
-        st.subheader("Tabla de Sistema Candidato - Imperfecta")
+        #st.subheader("Tabla de Sistema Candidato - Imperfecta")
         #st.table(candidateSystem_Imperfect)
 
-        st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
+        #st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
         #st.table(fB_candidateSystem_Perfect)
+
 
         self.original_system = obtener_tabla_probabilidades(
             repr_current_to_array(cs, cs_value),
@@ -45,8 +45,8 @@ class BruteForce:
             states,
         )
 
-        st.write("Sistema Original")
-        st.latex(rf"""\bullet \left(\frac{{{ns}ᵗ⁺¹}}{{{cs}ᵗ}}\right)""")
+        #st.write("Sistema Original")
+        #st.latex(rf"""\bullet \left(\frac{{{ns}ᵗ⁺¹}}{{{cs}ᵗ}}\right)""")
 
         original_system = obtener_tabla_probabilidades(
             repr_current_to_array(cs, cs_value),
@@ -55,8 +55,8 @@ class BruteForce:
             states,
         )
 
-        st.write("Validación Estado Original")
-        st.text(original_system)
+        #st.write("Validación Estado Original")
+        #st.text(original_system)
 
 
     def descomponer(self, ns, cs):
@@ -108,7 +108,6 @@ class BruteForce:
                 writer.writerow([combination_str, emd_str])
 
     def strategy(self,ns, cs):
-
         start_time = time.time()
 
         # Convertir a un objeto datetime
@@ -117,39 +116,9 @@ class BruteForce:
         # Formatear como cadena de fecha y hora
         formatted_time = dt_object.strftime('%Y-%m-%d %H:%M:%S.%f')
 
-        st.subheader(f"Momento inicial {formatted_time}",divider="green")
+        #st.subheader(f"Momento inicial {formatted_time}",divider="green")
 
-        st.subheader("Estados Encontrados")
-
-        st.text(f"NS: {ns}")
-        st.text(f"CS: {cs}")
-
-        # Crear una lista para guardar todas las combinaciones
-        all_combinations = []
-
-        # Recorrer todas las longitudes posibles de combinación entre 1 y len(cs)
-        for i in range(1, len(cs) + 1):
-            for j in range(1, len(ns) + 1):
-                # Obtener combinaciones de tamaño i de cs y tamaño j de ns
-                for comb_cs in itertools.combinations(cs, i):
-                    for comb_ns in itertools.combinations(ns, j):
-                        all_combinations.append((''.join(comb_cs), ''.join(comb_ns)))
-
-        # Mostrar todas las combinaciones
-        st.subheader(f" Combinaciones encontradas {len(all_combinations)}",divider="green")
-
-        for i_combination in range(len(all_combinations)):
-
-            combination = all_combinations[i_combination]
-
-            if((len(combination[0]) + len(combination[1]) >= 6 )):
-
-                st.text(f" Combinación {combination}")
-
-                ns_raw =combination[0]
-                cs_raw = combination[1]
-
-                for lenNs in range(len(ns_raw) + 1):
+        #st.subheader("Estados Encontrados")
 
         for lenNs in range(len(ns) + 1):
 
@@ -161,51 +130,51 @@ class BruteForce:
                     for x in range(len(cs) - lenCs + 1):
                         z = x + lenCs - 1
                         cs1, cs2 = cs[x : z + 1], cs[:x] + cs[z + 1 :]
+                        if ((cs1 != ("") or ns1 != ("")) and (cs2 != ("") or ns2 != (""))):
+                            # Verificar duplicados
+                            combinacion_actual = ((ns1, cs1), (ns2, cs2))
+                            combinacion_inversa = ((ns2, cs2), (ns1, cs1))
 
-                        # Verificar duplicados
-                        combinacion_actual = ((ns1, cs1), (ns2, cs2))
-                        combinacion_inversa = ((ns2, cs2), (ns1, cs1))
-
-                        if (combinacion_actual not in self.impresos and combinacion_inversa not in self.impresos) or (ns1 == ns and ns2 == "" and cs1 == "" and cs2 == ""):
-                            
-                            st.latex(rf"""\bullet \left(\frac{{{ns2}}}{{{cs2}}}\right) * \left(\frac{{{ns1}}}{{{cs1}}}\right)""")
-                            st.latex(rf"""\bullet \left(\frac{{{ns1}}}{{{cs1}}}\right) * \left(\frac{{{ns2}}}{{{cs2}}}\right)""")
-                            
-                            arr1 = np.array(self.descomponer(ns2, cs2))
-                            arr2 = np.array(self.descomponer(ns1, cs1))
-
-                            partitioned_system = []
-
-                            if len(arr1) > 0:
-                                partitioned_system = arr1
-
-                            if len(arr2) > 0:
-                                partitioned_system = arr2
-
-                            if len(arr1) > 0 and len(arr2) > 0:
-                                cross_product = np.kron(arr1, arr2)
-                                partitioned_system = ordenar_matriz_product(cross_product)
-
-                            if len(partitioned_system) > 0:
-                                # Convertir partitioned_system a array de NumPy si no lo es
-                                partitioned_system = np.array(partitioned_system)
-
-                                # Calcular la Distancia de Wasserstein (EMD)
-                                # No puede tener arreglo vacio
-                                emd_distance = wasserstein_distance(self.original_system,partitioned_system)
-                                st.latex(rf"""\bullet {partitioned_system}""")
-                                st.latex(rf"""\bullet {emd_distance}""")
-
-                                self.ValueCSV.append({"combination":combinacion_actual, "emd":str(emd_distance)})
-                                self.ValueCSV.append({"combination":combinacion_inversa, "emd":str(emd_distance)})
+                            if (combinacion_actual not in self.impresos and combinacion_inversa not in self.impresos) or (ns1 == ns and ns2 == "" and cs1 == "" and cs2 == ""):
                                 
-                                if emd_distance < self.min_emd and emd_distance > 0:
-                                    self.min_emd = emd_distance
-                                    mejor_particion = combinacion_actual
-                                    
+                                #st.latex(rf"""\bullet \left(\frac{{{ns2}}}{{{cs2}}}\right) * \left(\frac{{{ns1}}}{{{cs1}}}\right)""")
+                                #st.latex(rf"""\bullet \left(\frac{{{ns1}}}{{{cs1}}}\right) * \left(\frac{{{ns2}}}{{{cs2}}}\right)""")
+                                
+                                arr1 = np.array(self.descomponer(ns2, cs2))
+                                arr2 = np.array(self.descomponer(ns1, cs1))
 
-                            self.impresos.add(combinacion_actual)
-                            self.impresos.add(combinacion_inversa)
+                                partitioned_system = []
+
+                                if len(arr1) > 0:
+                                    partitioned_system = arr1
+
+                                if len(arr2) > 0:
+                                    partitioned_system = arr2
+
+                                if len(arr1) > 0 and len(arr2) > 0:
+                                    cross_product = np.kron(arr1, arr2)
+                                    partitioned_system = ordenar_matriz_product(cross_product)
+
+                                if len(partitioned_system) > 0:
+                                    # Convertir partitioned_system a array de NumPy si no lo es
+                                    partitioned_system = np.array(partitioned_system)
+
+                                    # Calcular la Distancia de Wasserstein (EMD)
+                                    # No puede tener arreglo vacio
+                                    emd_distance = wasserstein_distance(self.original_system,partitioned_system)
+                                    #st.latex(rf"""\bullet {partitioned_system}""")
+                                    #st.latex(rf"""\bullet {emd_distance}""")
+
+                                    #self.ValueCSV.append({"combination":combinacion_actual, "emd":str(emd_distance)})
+                                    #self.ValueCSV.append({"combination":combinacion_inversa, "emd":str(emd_distance)})
+                                    
+                                    if emd_distance < self.min_emd and emd_distance >= 0:
+                                        self.min_emd = emd_distance
+                                        mejor_particion = combinacion_actual
+                                        
+
+                                self.impresos.add(combinacion_actual)
+                                self.impresos.add(combinacion_inversa)
 
         # Marca el tiempo de finalización
         end_time = time.time()
@@ -215,7 +184,7 @@ class BruteForce:
         # Formatear como cadena de fecha y hora
         formatted_time_end = dt_objectEnd.strftime('%Y-%m-%d %H:%M:%S.%f')
 
-        st.subheader(f"Momento Final {formatted_time_end}",divider="green")
+        #st.subheader(f"Momento Final {formatted_time_end}",divider="green")
 
         elapsed_time = end_time - start_time
 
@@ -224,8 +193,8 @@ class BruteForce:
         # Formatear como cadena de fecha y hora
         formatted_time_elapsed_time = dt_object_elapsed_time.strftime('%M:%S.%f')
 
-        self.saveCSV()
+        #self.saveCSV()
 
-        st.subheader(f"Tiempo Total {formatted_time_elapsed_time}",divider="green")
+        #st.subheader(f"Tiempo Total {formatted_time_elapsed_time}",divider="green")
 
-        return mejor_particion, round(self.min_emd, 5)
+        return mejor_particion, round(self.min_emd, 5),formatted_time_elapsed_time

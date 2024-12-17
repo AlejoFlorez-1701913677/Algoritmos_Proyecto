@@ -1,8 +1,9 @@
 import time
-
+import csv
 import os
 import sys
 import json
+import itertools
 
 import streamlit as st
 import pandas as pd
@@ -94,15 +95,52 @@ if data is not None:
 
         sysFB_execPairContruction = st.button("Obtener Pares - Fuerza Bruta")
 
+        st.text(f"NS: {sysFB_nextStatus}")
+        st.text(f"CS: {sysFB_currentStatus}")
+
+        # Crear una lista para guardar todas las combinaciones
+        all_combinations = []
+
+        # Recorrer todas las longitudes posibles de combinación entre 1 y len(cs)
+        for i in range(1, len(sysFB_currentStatus) + 1):
+            for j in range(1, len(sysFB_nextStatus) + 1):
+                # Obtener combinaciones de tamaño i de cs y tamaño j de ns
+                for comb_cs in itertools.combinations(sysFB_currentStatus, i):
+                    for comb_ns in itertools.combinations(sysFB_nextStatus, j):
+                        if(len(comb_cs)+len(comb_ns)>=3):
+                            all_combinations.append((''.join(comb_cs), ''.join(comb_ns)))
+
+        # Mostrar todas las combinaciones
+        st.subheader(f" Combinaciones encontradas {len(all_combinations)}",divider="green")
+        ElementosGuardar = []
         if sysFB_execPairContruction:
 
             st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
+            for x in range(len(all_combinations)):
+                bruteForce = BruteForce(result_matrix, dataJson["stateSought"], states, all_combinations[x][0], all_combinations[x][1], dataJson, sysFB_candidateSystem, varData)
+                FB_mejor_particion, FB_min_emd,Tiempo = bruteForce.strategy(all_combinations[x][1], all_combinations[x][0])
+                #st.subheader(f"Resultado numero {x+1}")
+                #st.subheader(f"Mejor Partición encontrada {FB_mejor_particion}")
+                #st.subheader(f"Mejor EMD {FB_min_emd}",divider="gray")
+                ElementosGuardar.append({"Sistema":all_combinations[x],"combination":FB_mejor_particion, "emd":str(FB_min_emd),"Tiempo":Tiempo})
+        with open('archivo.csv', mode='w', newline='') as file:
+            writer = csv.writer(file)
+            
+            # Escribir el encabezado del CSV
+            writer.writerow(['combination', 'emd','System', 'Tiempo'])
+            
+            # Iterar sobre el arreglo de objetos y escribir cada fila
+            for obj in ElementosGuardar:
+                # Convertir las tuplas de combination a una cadena (puedes elegir el formato que más te convenga)
+                combination_str = '; '.join([f"({x[0]}, {x[1]})" for x in obj['combination']])
+                
+                # Convertir el valor de 'emd' a string
+                emd_str = str(obj['emd'])
 
-            bruteForce = BruteForce(result_matrix, dataJson["stateSought"], states, sysFB_currentStatus, sysFB_nextStatus, dataJson, sysFB_candidateSystem, varData)
-            FB_mejor_particion, FB_min_emd = bruteForce.strategy(sysFB_nextStatus, sysFB_currentStatus)
-
-            st.subheader(f"Mejor Partición encontrada {FB_mejor_particion}")
-            st.subheader(f"Mejor EMD {FB_min_emd}",divider="gray")
+                sistema = str(obj["Sistema"])
+                
+                # Escribir la fila en el CSV
+                writer.writerow([combination_str, emd_str,sistema,str(obj["Tiempo"])])
 
     with st.expander("Primera Estrategia"):
 
@@ -130,6 +168,7 @@ if data is not None:
 
             firstStrategy = FirstStrategy(result_matrix, dataJson["stateSought"], states, sysC_currentStatus, sysC_nextStatus, candidateSystem, varData)
             mejor_particion, min_emd = firstStrategy.strategy()
+            st.latex(f"Mejor Caso {mejor_particion} - {min_emd}")
 
     with st.expander("Segunda Estrategia"):
 

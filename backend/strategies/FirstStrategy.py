@@ -18,6 +18,7 @@ class FirstStrategy:
 
     def __init__(self, probabilities, cs_value, states, cs, ns, st2_candidateSystem, varData):
         start_time = time.time()
+        self.ListaMejores = []
         self.probabilities = probabilities
         self.cs_value = cs_value
         self.memory = {}
@@ -28,17 +29,17 @@ class FirstStrategy:
         self.ns = ns
         self.marginalization = Marginalization(probabilities, st2_candidateSystem, varData)
 
-        st.write("Sistema Original")
-        st.latex(rf"""\bullet \left(\frac{{{self.ns}ᵗ⁺¹}}{{{self.cs}ᵗ}}\right)""")
+        #st.write("Sistema Original")
+        #st.latex(rf"""\bullet \left(\frac{{{self.ns}ᵗ⁺¹}}{{{self.cs}ᵗ}}\right)""")
 
         candidateSystem_Imperfect = self.marginalization.indexCandidateSystem()
         candidateSystem_Perfect = self.marginalization.marginalize_variableFuture(candidateSystem_Imperfect)
 
-        st.subheader("Tabla de Sistema Candidato - Imperfecta")
-        st.table(candidateSystem_Imperfect)
+        #st.subheader("Tabla de Sistema Candidato - Imperfecta")
+        #st.table(candidateSystem_Imperfect)
 
-        st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
-        st.table(candidateSystem_Perfect)
+        #st.subheader("Tabla de Sistema Candidato - Perfecta (Marginalizada)")
+        #st.table(candidateSystem_Perfect)
 
         self.original_system = obtener_tabla_probabilidades(
             repr_current_to_array(self.cs, self.cs_value),
@@ -47,8 +48,8 @@ class FirstStrategy:
             self.states,
         )
 
-        st.write("Validación Estado Original")
-        st.text(self.original_system)
+        #st.write("Validación Estado Original")
+        #st.text(self.original_system)
         elapsed_time = time.time() - start_time
         st.write(f"Tiempo de inicialización: {elapsed_time:.2f} segundos")
 
@@ -137,16 +138,16 @@ class FirstStrategy:
         cs2_flattened = [str(item) for sublist in cs2Result for item in (sublist if isinstance(sublist, list) else [sublist])]
         ns2_flattened = [str(item) for sublist in ns2Result for item in (sublist if isinstance(sublist, list) else [sublist])]
 
-        st.latex(rf"""\bullet \left(\frac{{{''.join(ns1_flattened)}}}{{{''.join(cs1_flattened)}}}\right) * \left(\frac{{{''.join(ns2_flattened)}}}{{{''.join(cs2_flattened)}}}\right)""")
+        #st.latex(rf"""\bullet \left(\frac{{{''.join(ns1_flattened)}}}{{{''.join(cs1_flattened)}}}\right) * \left(\frac{{{''.join(ns2_flattened)}}}{{{''.join(cs2_flattened)}}}\right)""")
         return ''.join(ns1_flattened), ''.join(cs1_flattened), ''.join(ns2_flattened), ''.join(cs2_flattened)
 
     def generar_combinaciones(self, seleccionados, restantes, Primero):
         self.min_emd = float("inf")
-        st.divider()
-        st.subheader("Sistema a combinar:", divider="gray")
+        #st.divider()
+        #st.subheader("Sistema a combinar:", divider="gray")
 
         self.formatStrategie(seleccionados, restantes)
-        st.divider()
+        #st.divider()
 
         Opciones = []
         Combinacion = [False, 1]
@@ -187,7 +188,7 @@ class FirstStrategy:
             if len(partitioned_system) > 0:
                 partitioned_system = np.array(partitioned_system)
                 emd_distance = wasserstein_distance(self.original_system, partitioned_system)
-                st.latex(rf"""\bullet EMD : {emd_distance}""")
+                #st.latex(rf"""\bullet EMD : {emd_distance}""")
 
                 if (emd_distance >= 0.0) and (emd_distance < self.min_emd):
                     self.min_emd = emd_distance
@@ -196,7 +197,7 @@ class FirstStrategy:
             Opciones.append([Copsel, Copia, emd_distance])
             seleccionados.remove(restantes[i])
 
-        st.subheader("Combinación Elegida", divider="gray")
+        #st.subheader("Combinación Elegida", divider="gray")
         self.formatStrategie(self.mejor_particion[0], self.mejor_particion[1])
 
         seleccion = min(Opciones, key=lambda x: x[2])
@@ -209,32 +210,51 @@ class FirstStrategy:
 
     def strategy(self):
         start_time = time.time()  # Inicia el contador de tiempo
-        st.header("Combinaciones Encontradas")
+        #st.header("Combinaciones Encontradas")
 
         Todos = []
+        Original = []
 
         for x in range(len(self.ns)):
             Todos.append(self.ns[x] + 'N')
+            Original.append(self.ns[x] + 'N')
 
         for x in range(len(self.cs)):
             Todos.append(self.cs[x])
+            Original.append(self.cs[x])
 
         while len(Todos) > 2:
             Final = self.generar_combinaciones([Todos[0]], Todos[1:], True)
-            st.latex(f'{Final}')
+            #st.latex(f'{Final}')
             Arreglo = self.Cortar(Final)
+            #st.latex(f'{Arreglo}')
+            #st.latex(rf"""\bullet EMD : {self.mejor_particion[2]}""")
+            #st.latex(rf"""\bullet Mejor Combinación : {self.mejor_particion[1]}""")
+            self.ListaMejores.append([self.mejor_particion[1],self.mejor_particion[2]])
 
             for x in Todos[3:]:
                 self.min_emd = float("inf")
                 Arreglo = self.generar_combinaciones(Arreglo[len(Arreglo) - 1], Arreglo[:-1], True)
                 Arreglo = self.Cortar(Arreglo)
                 self.formatStrategie(Arreglo[0], Arreglo[1])
-                st.latex(f'{Arreglo}')
-                st.latex(rf"""\bullet EMD : {self.min_emd}""")
-                st.latex(rf"""\bullet Mejor Combinación : {self.mejor_particion}""")
+                #st.latex(f'{Arreglo}')
+                #st.latex(rf"""\bullet EMD : {self.mejor_particion[2]}""")
+                #st.latex(rf"""\bullet Mejor Combinación : {self.mejor_particion[1]}""")
+                self.ListaMejores.append([self.mejor_particion[1],self.mejor_particion[2]])
 
             Todos = Arreglo
 
-        elapsed_time = time.time() - start_time  # Calcula el tiempo total
+        elapsed_time = time.time() - start_time
+        min_value = float('inf')
+        min_pair = None
+
+        for item in self.ListaMejores:
+            second_value = item[1]
+            
+            if second_value < min_value:
+                min_value = second_value
+                min_pair = item
+
+        resultado = [x for x in Original if x not in min_pair[0]]
         st.write(f"Tiempo total de ejecución de la estrategia: {elapsed_time:.2f} segundos")
-        return self.mejor_particion, round(self.min_emd, 5)
+        return [min_pair[0],resultado], round(min_pair[1], 5)
