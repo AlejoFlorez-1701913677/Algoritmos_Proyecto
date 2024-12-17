@@ -1,4 +1,5 @@
 import csv
+from datetime import datetime
 import time  # Importamos el módulo time
 import numpy as np
 import streamlit as st
@@ -246,6 +247,12 @@ class FirstStrategy:
             Todos = Arreglo
 
         elapsed_time = time.time() - start_time
+
+        # Convertir a un objeto datetime
+        dt_object_elapsed_time = datetime.fromtimestamp(elapsed_time)
+        # Formatear como cadena de fecha y hora
+        formatted_time_elapsed_time = dt_object_elapsed_time.strftime('%M:%S.%f')
+
         min_value = float('inf')
         min_pair = None
 
@@ -258,4 +265,4 @@ class FirstStrategy:
 
         resultado = [x for x in Original if x not in min_pair[0]]
         #st.write(f"Tiempo total de ejecución de la estrategia: {elapsed_time:.2f} segundos")
-        return [min_pair[0],resultado], round(min_pair[1], 5), elapsed_time
+        return [min_pair[0],resultado], round(min_pair[1], 5), formatted_time_elapsed_time
