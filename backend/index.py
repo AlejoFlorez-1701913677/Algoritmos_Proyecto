@@ -299,28 +299,60 @@ if data is not None:
 
         st3_execPairContruction = st.button("Obtener Pares - Estrategia 3")
 
+        all_combinations = []
+
+        # Recorrer todas las longitudes posibles de combinación entre 1 y len(cs)
+        for i in range(1, len(st3_sysC_currentStatus) + 1):
+            for j in range(1, len(st3_sysC_nextStatus) + 1):
+                # Obtener combinaciones de tamaño i de cs y tamaño j de ns
+                for comb_cs in itertools.combinations(st3_sysC_currentStatus, i):
+                    for comb_ns in itertools.combinations(st3_sysC_nextStatus, j):
+                        if(len(comb_cs)+len(comb_ns)>=3):
+                            all_combinations.append((''.join(comb_cs), ''.join(comb_ns)))
+        
+        st.subheader(f" Combinaciones encontradas {len(all_combinations)}",divider="green")
+        fs_savedElemets = []
+
         if st3_execPairContruction:
 
             # Instanciar y ejecutar Tercera Estrategia
-            try:
-                
+                for x in range(len(all_combinations)):
                 #thirdStrategy = ThirdStrategy(result_matrix, dataJson["stateSought"], states, st3_sysC_currentStatus, st3_sysC_nextStatus,candidate_system_input, variable_data)
-                third_strategy = ThirdStrategy(
-                    probabilities=result_matrix,
-                    cs_value=dataJson["stateSought"],
-                    states=states,
-                    ns=st3_sysC_nextStatus,
-                    cs=st3_sysC_currentStatus
-                )
+                    third_strategy = ThirdStrategy(
+                        probabilities=result_matrix,
+                        cs_value=dataJson["stateSought"],
+                        states=states,
+                        ns=all_combinations[x][1],
+                        cs=all_combinations[x][0]
+                    )
 
-                # Ejecutar la estrategia con ACO
-                st.caption("Iniciando optimización con ACO para la Tercera Estrategia...")
-                best_partition, best_emd = third_strategy.run_aco()
+                    # Ejecutar la estrategia con ACO
+                    #st.caption("Iniciando optimización con ACO para la Tercera Estrategia...")
+                    best_partition, best_emd,Tiempo = third_strategy.run_aco()
+                    print(str(x+1))
+                    # Mostrar resultados
+                    #st.success("Resultados obtenidos:")
+                    #st.text(f"Mejor Partición: {best_partition}")
+                    #st.text(f"EMD Mínimo: {best_emd}")
+                    #st.text(f"Subsistema: {all_combinations[x]}")
+                    #st.text(f"Tiempo: {Tiempo}")
+                    ElementosGuardar.append({"Sistema":all_combinations[x],"combination":best_partition, "emd":str(best_emd),"Tiempo":Tiempo})
+        with open('archivo-AOC-2.csv', mode='w', newline='') as file:
+            writer = csv.writer(file)
+            
+            # Escribir el encabezado del CSV
+            writer.writerow(['combination', 'emd','System', 'Tiempo'])
+            
+            # Iterar sobre el arreglo de objetos y escribir cada fila
+            for obj in ElementosGuardar:
+                # Convertir las tuplas de combination a una cadena (puedes elegir el formato que más te convenga)
+                combination_str = '; '.join([f"({x[0]}, {x[1]})" for x in obj['combination']])
+                
+                # Convertir el valor de 'emd' a string
+                emd_str = str(obj['emd'])
 
-                # Mostrar resultados
-                st.success("Resultados obtenidos:")
-                st.text(f"Mejor Partición: {best_partition}")
-                st.text(f"EMD Mínimo: {best_emd}")
+                sistema = str(obj["Sistema"])
+                
+                # Escribir la fila en el CSV
+                writer.writerow([combination_str, emd_str,sistema,str(obj["Tiempo"])])    
 
-            except Exception as e:
-                st.error(f"Ocurrió un error al ejecutar la Tercera Estrategia: {str(e)}")
