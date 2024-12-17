@@ -107,7 +107,7 @@ class BruteForce:
                 # Escribir la fila en el CSV
                 writer.writerow([combination_str, emd_str])
 
-    def strategy(self,ns, cs):
+    def strategy(self, ns, cs):
         start_time = time.time()
 
         # Convertir a un objeto datetime

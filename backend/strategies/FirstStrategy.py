@@ -1,6 +1,7 @@
+import csv
+import time  # Importamos el módulo time
 import numpy as np
 import streamlit as st
-import time  # Importamos el módulo time
 
 from scipy.stats import wasserstein_distance
 
@@ -51,7 +52,7 @@ class FirstStrategy:
         #st.write("Validación Estado Original")
         #st.text(self.original_system)
         elapsed_time = time.time() - start_time
-        st.write(f"Tiempo de inicialización: {elapsed_time:.2f} segundos")
+        #st.write(f"Tiempo de inicialización: {elapsed_time:.2f} segundos")
 
     def Cortar(self, Lista):
         Corte = Lista[-2:]
@@ -208,20 +209,20 @@ class FirstStrategy:
 
         return Final
 
-    def strategy(self):
+    def strategy(self, ns, cs):
         start_time = time.time()  # Inicia el contador de tiempo
         #st.header("Combinaciones Encontradas")
 
         Todos = []
         Original = []
 
-        for x in range(len(self.ns)):
-            Todos.append(self.ns[x] + 'N')
-            Original.append(self.ns[x] + 'N')
+        for x in range(len(ns)):
+            Todos.append(ns[x] + 'N')
+            Original.append(ns[x] + 'N')
 
-        for x in range(len(self.cs)):
-            Todos.append(self.cs[x])
-            Original.append(self.cs[x])
+        for x in range(len(cs)):
+            Todos.append(cs[x])
+            Original.append(cs[x])
 
         while len(Todos) > 2:
             Final = self.generar_combinaciones([Todos[0]], Todos[1:], True)
@@ -256,5 +257,5 @@ class FirstStrategy:
                 min_pair = item
 
         resultado = [x for x in Original if x not in min_pair[0]]
-        st.write(f"Tiempo total de ejecución de la estrategia: {elapsed_time:.2f} segundos")
-        return [min_pair[0],resultado], round(min_pair[1], 5)
+        #st.write(f"Tiempo total de ejecución de la estrategia: {elapsed_time:.2f} segundos")
+        return [min_pair[0],resultado], round(min_pair[1], 5), elapsed_time

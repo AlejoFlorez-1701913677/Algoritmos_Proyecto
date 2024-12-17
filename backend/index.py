@@ -95,9 +95,6 @@ if data is not None:
 
         sysFB_execPairContruction = st.button("Obtener Pares - Fuerza Bruta")
 
-        st.text(f"NS: {sysFB_nextStatus}")
-        st.text(f"CS: {sysFB_currentStatus}")
-
         # Crear una lista para guardar todas las combinaciones
         all_combinations = []
 
@@ -111,11 +108,13 @@ if data is not None:
                             all_combinations.append((''.join(comb_cs), ''.join(comb_ns)))
 
         # Mostrar todas las combinaciones
-        st.subheader(f" Combinaciones encontradas {len(all_combinations)}",divider="green")
+        st.subheader(f" Combinaciones encontradas {len(all_combinations)}",divider="blue")
         ElementosGuardar = []
+        
         if sysFB_execPairContruction:
 
             st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
+            
             for x in range(len(all_combinations)):
                 bruteForce = BruteForce(result_matrix, dataJson["stateSought"], states, all_combinations[x][0], all_combinations[x][1], dataJson, sysFB_candidateSystem, varData)
                 FB_mejor_particion, FB_min_emd,Tiempo = bruteForce.strategy(all_combinations[x][1], all_combinations[x][0])
@@ -123,6 +122,7 @@ if data is not None:
                 #st.subheader(f"Mejor Partición encontrada {FB_mejor_particion}")
                 #st.subheader(f"Mejor EMD {FB_min_emd}",divider="gray")
                 ElementosGuardar.append({"Sistema":all_combinations[x],"combination":FB_mejor_particion, "emd":str(FB_min_emd),"Tiempo":Tiempo})
+        
         with open('archivo.csv', mode='w', newline='') as file:
             writer = csv.writer(file)
             
@@ -141,6 +141,9 @@ if data is not None:
                 
                 # Escribir la fila en el CSV
                 writer.writerow([combination_str, emd_str,sistema,str(obj["Tiempo"])])
+
+
+        st.subheader("Finalización de Estrategia",divider="blue")
 
     with st.expander("Primera Estrategia"):
 
@@ -162,13 +165,53 @@ if data is not None:
 
         execPairContruction = st.button("Obtener Pares")
 
+        # Crear una lista para guardar todas las combinaciones
+        all_combinations = []
+
+        # Recorrer todas las longitudes posibles de combinación entre 1 y len(cs)
+        for i in range(1, len(sysC_currentStatus) + 1):
+            for j in range(1, len(sysC_nextStatus) + 1):
+                # Obtener combinaciones de tamaño i de cs y tamaño j de ns
+                for comb_cs in itertools.combinations(sysC_currentStatus, i):
+                    for comb_ns in itertools.combinations(sysC_nextStatus, j):
+                        if(len(comb_cs)+len(comb_ns)>=3):
+                            all_combinations.append((''.join(comb_cs), ''.join(comb_ns)))
+
+        # Mostrar todas las combinaciones
+        st.subheader(f" Combinaciones encontradas {len(all_combinations)}",divider="green")
+        fs_savedElemets = []
+
         if execPairContruction:
 
             st.caption("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus nec dignissim nulla. Proin porta nulla eros, ac posuere nisi molestie et. Nulla dapibus pellentesque enim, at elementum nulla mollis ut. Nunc convallis ultricies augue faucibus sagittis. Mauris hendrerit lorem a nunc porta dignissim. Sed vehicula.")
 
-            firstStrategy = FirstStrategy(result_matrix, dataJson["stateSought"], states, sysC_currentStatus, sysC_nextStatus, candidateSystem, varData)
-            mejor_particion, min_emd = firstStrategy.strategy()
-            st.latex(f"Mejor Caso {mejor_particion} - {min_emd}")
+            for x in range(len(all_combinations)):
+                firstStrategy = FirstStrategy(result_matrix, dataJson["stateSought"], states, all_combinations[x][0], all_combinations[x][1], candidateSystem, varData)
+                mejor_particion, min_emd, elapsed_time = firstStrategy.strategy(all_combinations[x][1],all_combinations[x][0])
+                #st.latex(f"Mejor Caso {mejor_particion} - {min_emd}")
+                fs_savedElemets.append({"Sistema":all_combinations[x],"combination":mejor_particion, "emd":str(min_emd),"Tiempo":elapsed_time})
+
+
+        with open('Strategie1.csv', mode='w', newline='') as file:
+            writer = csv.writer(file)
+            
+            # Escribir el encabezado del CSV
+            writer.writerow(['combination', 'emd','System', 'Tiempo'])
+            
+            # Iterar sobre el arreglo de objetos y escribir cada fila
+            for obj in fs_savedElemets:
+                # Convertir las tuplas de combination a una cadena (puedes elegir el formato que más te convenga)
+                combination_str = '; '.join([f"({x})" for x in obj['combination']])
+                
+                # Convertir el valor de 'emd' a string
+                emd_str = str(obj['emd'])
+
+                sistema = str(obj["Sistema"])
+                
+                # Escribir la fila en el CSV
+                writer.writerow([combination_str, emd_str,sistema,str(obj["Tiempo"])])
+
+        st.subheader("Finalización de Estrategia",divider="green")
 
     with st.expander("Segunda Estrategia"):
 
