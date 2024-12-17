@@ -151,59 +151,61 @@ class BruteForce:
 
                 for lenNs in range(len(ns_raw) + 1):
 
-                    for i in range(len(ns_raw) - lenNs + 1):
-                        j = i + lenNs - 1
-                        ns1, ns2 = ns_raw[i : j + 1], ns_raw[:i] + ns_raw[j + 1 :]
+        for lenNs in range(len(ns) + 1):
 
-                        for lenCs in range(len(cs_raw) + 1):
-                            for x in range(len(cs_raw) - lenCs + 1):
-                                z = x + lenCs - 1
-                                cs1, cs2 = cs_raw[x : z + 1], cs_raw[:x] + cs_raw[z + 1 :]
+            for i in range(len(ns) - lenNs + 1):
+                j = i + lenNs - 1
+                ns1, ns2 = ns[i : j + 1], ns[:i] + ns[j + 1 :]
 
-                                # Verificar duplicados
-                                combinacion_actual = ((ns1, cs1), (ns2, cs2))
-                                combinacion_inversa = ((ns2, cs2), (ns1, cs1))
+                for lenCs in range(len(cs) + 1):
+                    for x in range(len(cs) - lenCs + 1):
+                        z = x + lenCs - 1
+                        cs1, cs2 = cs[x : z + 1], cs[:x] + cs[z + 1 :]
 
-                                if (combinacion_actual not in self.impresos and combinacion_inversa not in self.impresos) or (ns1 == ns_raw and ns2 == "" and cs1 == "" and cs2 == ""):
+                        # Verificar duplicados
+                        combinacion_actual = ((ns1, cs1), (ns2, cs2))
+                        combinacion_inversa = ((ns2, cs2), (ns1, cs1))
+
+                        if (combinacion_actual not in self.impresos and combinacion_inversa not in self.impresos) or (ns1 == ns and ns2 == "" and cs1 == "" and cs2 == ""):
+                            
+                            st.latex(rf"""\bullet \left(\frac{{{ns2}}}{{{cs2}}}\right) * \left(\frac{{{ns1}}}{{{cs1}}}\right)""")
+                            st.latex(rf"""\bullet \left(\frac{{{ns1}}}{{{cs1}}}\right) * \left(\frac{{{ns2}}}{{{cs2}}}\right)""")
+                            
+                            arr1 = np.array(self.descomponer(ns2, cs2))
+                            arr2 = np.array(self.descomponer(ns1, cs1))
+
+                            partitioned_system = []
+
+                            if len(arr1) > 0:
+                                partitioned_system = arr1
+
+                            if len(arr2) > 0:
+                                partitioned_system = arr2
+
+                            if len(arr1) > 0 and len(arr2) > 0:
+                                cross_product = np.kron(arr1, arr2)
+                                partitioned_system = ordenar_matriz_product(cross_product)
+
+                            if len(partitioned_system) > 0:
+                                # Convertir partitioned_system a array de NumPy si no lo es
+                                partitioned_system = np.array(partitioned_system)
+
+                                # Calcular la Distancia de Wasserstein (EMD)
+                                # No puede tener arreglo vacio
+                                emd_distance = wasserstein_distance(self.original_system,partitioned_system)
+                                st.latex(rf"""\bullet {partitioned_system}""")
+                                st.latex(rf"""\bullet {emd_distance}""")
+
+                                self.ValueCSV.append({"combination":combinacion_actual, "emd":str(emd_distance)})
+                                self.ValueCSV.append({"combination":combinacion_inversa, "emd":str(emd_distance)})
+                                
+                                if emd_distance < self.min_emd and emd_distance > 0:
+                                    self.min_emd = emd_distance
+                                    mejor_particion = combinacion_actual
                                     
-                                    st.latex(rf"""\bullet \left(\frac{{{ns2}}}{{{cs2}}}\right) * \left(\frac{{{ns1}}}{{{cs1}}}\right)""")
-                                    st.latex(rf"""\bullet \left(\frac{{{ns1}}}{{{cs1}}}\right) * \left(\frac{{{ns2}}}{{{cs2}}}\right)""")
-                                    
-                                    arr1 = np.array(self.descomponer(ns2, cs2))
-                                    arr2 = np.array(self.descomponer(ns1, cs1))
 
-                                    partitioned_system = []
-
-                                    if len(arr1) > 0:
-                                        partitioned_system = arr1
-
-                                    if len(arr2) > 0:
-                                        partitioned_system = arr2
-
-                                    if len(arr1) > 0 and len(arr2) > 0:
-                                        cross_product = np.kron(arr1, arr2)
-                                        partitioned_system = ordenar_matriz_product(cross_product)
-
-                                    if len(partitioned_system) > 0:
-                                        # Convertir partitioned_system a array de NumPy si no lo es
-                                        partitioned_system = np.array(partitioned_system)
-
-                                        # Calcular la Distancia de Wasserstein (EMD)
-                                        # No puede tener arreglo vacio
-
-                                        emd_distance = wasserstein_distance(self.original_system,partitioned_system)
-                                        st.latex(rf"""\bullet {emd_distance}""")
-
-                                        self.ValueCSV.append({"combination":combinacion_actual, "emd":str(emd_distance)})
-                                        self.ValueCSV.append({"combination":combinacion_inversa, "emd":str(emd_distance)})
-                                        
-                                        if emd_distance < self.min_emd and emd_distance > 0:
-                                            self.min_emd = emd_distance
-                                            mejor_particion = combinacion_actual
-                                            
-
-                                    self.impresos.add(combinacion_actual)
-                                    self.impresos.add(combinacion_inversa)
+                            self.impresos.add(combinacion_actual)
+                            self.impresos.add(combinacion_inversa)
 
         # Marca el tiempo de finalización
         end_time = time.time()
