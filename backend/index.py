@@ -301,31 +301,26 @@ if data is not None:
 
         if st3_execPairContruction:
 
-            st.caption("Iniciando optimización con ACO para la Tercera Estrategia...")
-
             # Instanciar y ejecutar Tercera Estrategia
             try:
                 
                 #thirdStrategy = ThirdStrategy(result_matrix, dataJson["stateSought"], states, st3_sysC_currentStatus, st3_sysC_nextStatus,candidate_system_input, variable_data)
                 third_strategy = ThirdStrategy(
-                    probabilities=result_matrix,           # Matriz de probabilidades generada
-                    cs_value=dataJson["stateSought"],      # Estado buscado
-                    states=states,                         # Lista de estados
-                    ns=list(st3_sysC_nextStatus),          # Estado futuro (como lista de caracteres)
-                    cs=list(st3_sysC_currentStatus),       # Estado presente (como lista de caracteres)
-                    candidate_system=st3_candidateSystem,  # Sistema candidato ingresado
-                    var_data=varData                       # Datos auxiliares
+                    probabilities=result_matrix,
+                    cs_value=dataJson["stateSought"],
+                    states=states,
+                    ns=st3_sysC_nextStatus,
+                    cs=st3_sysC_currentStatus
                 )
 
-                resultados = third_strategy.strategy()
+                # Ejecutar la estrategia con ACO
+                st.caption("Iniciando optimización con ACO para la Tercera Estrategia...")
+                best_partition, best_emd = third_strategy.run_aco()
 
-                if resultados is None:
-                    st.error("No se obtuvieron resultados de la optimización con ACO.")
-                else:
-                    mejor_particion, min_emd = resultados
-                    st.success("Resultados obtenidos:")
-                    st.text(f"Mejor Partición: {mejor_particion}")
-                    st.text(f"EMD Mínimo: {min_emd}")
+                # Mostrar resultados
+                st.success("Resultados obtenidos:")
+                st.text(f"Mejor Partición: {best_partition}")
+                st.text(f"EMD Mínimo: {best_emd}")
 
             except Exception as e:
                 st.error(f"Ocurrió un error al ejecutar la Tercera Estrategia: {str(e)}")
